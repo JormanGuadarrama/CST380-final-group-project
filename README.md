@@ -60,7 +60,7 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
  
 ```
 +----------------------------------------------------------+
-|  📍 Enter a location...                   [ 🔍 Search ] |
+|  📍 Enter a location... Current          [ 🔍 Search ] |
 +----------------------------------------------------------+
 |                                                          |
 |        .  .  .  .  .  .  .  .  .  .  .  .  .  .        |
