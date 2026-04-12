@@ -169,8 +169,8 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 ---
  
 ## Wireframes
- 
-[Add picture of your hand sketched wireframes in this section]
+
+<img src="images/wireframe_image.jpg" width=600>
  
 ### [BONUS] Digital Wireframes & Mockups
  
