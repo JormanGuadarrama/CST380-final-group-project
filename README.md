@@ -25,73 +25,155 @@ Local Deals Live Map is a community-driven mobile app that helps users discover 
 - **Habit:** Users may check the app multiple times per week when planning purchases; contributors may use it more frequently  
 - **Scope:** Narrow initial scope (map + deals), with clear expansion opportunities such as voting, saved deals, notifications, and AI-powered recommendations  
 
-## Product Spec
-
-### 1. User Stories (Required and Optional)
-
-**Required Must-have Stories**
-
-* User can view nearby deals displayed as pins on a map  
-* User can tap on a pin to view deal details (name, discount, expiration)  
-* User can add a new deal with location, description, and expiration  
-* User can view the map centered around their current location  
-
-**Optional Nice-to-have Stories**
-
-* User can upvote or downvote deals to verify accuracy  
-* User can upload photos of deals using their camera  
-* User can receive push notifications when deals are nearby  
-* User can create an account to track their contributions  
-* User can save/bookmark deals or locations for later viewing  
-* User can receive AI-based deal recommendations (Gemini integration)  
-
-### 2. Screen Archetypes
-
+Product spec · MD
+# Product Spec
+ 
+---
+ 
+## 1. User Stories
+ 
+### Required Must-Have Stories
+ 
+* User can view nearby deals displayed as pins on a map within a 10-mile radius of a location they plan to be around or want to go to, with traffic and walking time factored into results
+* User can tap on a pin to view a deal card where the most important information — discount amount, store name, and expiration — is visually prioritized so it can be understood at a fast glance, with additional details available below
+* User can add a new deal with location, description, and expiration — new deals are visible to all users when they are nearby or when the deal matches a filter they search with
+ 
+### Optional Nice-to-Have Stories
+ 
+Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agile estimation scale:
+`1` = trivial · `3` = simple · `5` = moderate · `8` = complex · `13` = large/high effort · `21` = very large, consider breaking apart
+ 
+* **5 pts** — User can upvote or downvote deals to verify accuracy — requires vote tracking, duplicate vote prevention, and updating deal credibility scores
+* **8 pts** — User can upload photos of deals using their camera — requires device camera API access, image compression, and cloud storage integration
+* **13 pts** — User can receive push notifications when deals are nearby — requires background location monitoring, notification scheduling, and a push delivery service
+* **8 pts** — User can create an account to track their contributions; guest browsing is available with extreme limitations on content creation — requires full auth system (login, session management, roles)
+* **3 pts** — User can save/bookmark deals — saved cards update to reflect expiration status and display the date the user saved them — requires persistent local or cloud storage with time-aware state
+* **13 pts** — User can receive AI-based deal recommendations (Gemini integration) — requires prompt engineering, API integration, and personalization logic based on user behavior
+ 
+---
+ 
+## 2. Screen Archetypes
+ 
 - [ ] **Map Screen (Home)**
-* Required User Feature: User can view nearby deals on a map  
-* Required User Feature: User can tap a deal pin to view details  
-
+  * Required: User can view nearby deals on a map
+  * Required: User can tap a deal pin to view details
+ 
+```
++----------------------------------------------------------+
+|  📍 Enter a location...                   [ 🔍 Search ] |
++----------------------------------------------------------+
+|                                                          |
+|        .  .  .  .  .  .  .  .  .  .  .  .  .  .        |
+|      .                                             .      |
+|    .         📌 Starbucks                           .    |
+|   .          (25% off)                               .   |
+|  .                                                    .  |
+|  .                    📌 Target                       .  |
+|  .                    (BOGO)                          .  |
+|  .                                                    .  |
+|   .              ★ YOU ARE HERE ★                    .   |
+|    .                                                .    |
+|    .      📌 Chipotle                               .    |
+|     .     ($5 bowl)                               .      |
+|       .                                         .        |
+|         .  .  .  .  .  .  .  .  .  .  .  .  .          |
+|                                          [ + Add Deal ]  |
++----------------------------------------------------------+
+|  [   🗺  Map   ]    [  ➕  Add Deal  ]   [  👤 Profile ] |
++----------------------------------------------------------+
+```
+ 
 - [ ] **Deal Detail Screen**
-* Required User Feature: User can view detailed information about a deal  
-* Optional User Feature: User can save/bookmark a deal  
-
+  * Required: User can view detailed information about a deal
+  * Optional: User can save/bookmark a deal
+ 
 - [ ] **Add Deal Screen**
-* Required User Feature: User can submit a new deal  
-
+  * Required: User can submit a new deal
+ 
 - [ ] **Profile Screen**
-* Optional User Feature: User can view saved/bookmarked deals  
-* Optional User Feature: User can view previously submitted deals  
-
-### 3. Navigation
-
-**Tab Navigation** (Tab to Screen)
-
-- [ ] Map (Home)  
-- [ ] Add Deal  
-- [ ] Profile  
-
-**Flow Navigation** (Screen to Screen)
-
-- [ ] **Map Screen**
-  * Leads to **Deal Detail Screen** (tap a pin)  
-  * Leads to **Add Deal Screen** (tap add button)  
-
-- [ ] **Deal Detail Screen**
-  * Leads to **Map Screen** (back)  
-  * Leads to **Profile Screen** (if saving/viewing saved deals)  
-
-- [ ] **Add Deal Screen**
-  * Leads to **Map Screen** (after submission or cancel)  
-
-- [ ] **Profile Screen**
-  * Leads to **Deal Detail Screen** (view saved or posted deals)  
-
+  * Optional: User can view saved/bookmarked deals
+  * Optional: User can view previously submitted deals
+ 
+---
+ 
+## 3. Navigation
+ 
+### Tab Navigation
+ 
+```
++------------------------------------------+
+|                                          |
+|              [Screen Content]            |
+|                                          |
++------------------------------------------+
+|  [  Map  ]   [ + Add Deal ]  [ Profile ] |
++------------------------------------------+
+```
+ 
+```
++------------------------------------------+
+|  Deal Card View                          |
+|  +------------------------------------+  |
+|  |  Store Name         💾 Save        |  |
+|  |  📍 0.3 mi  |  ⏱ 5 min walk       |  |
+|  |  20% off all items                 |  |
+|  |  Expires: Apr 18, 2026             |  |
+|  +------------------------------------+  |
+|  +------------------------------------+  |
+|  |  Store Name         💾 Save        |  |
+|  |  📍 1.1 mi  |  🚗 4 min drive      |  |
+|  |  Buy 1 Get 1 Free                  |  |
+|  |  Expires: Apr 20, 2026             |  |
+|  +------------------------------------+  |
++------------------------------------------+
+|  [  Map  ]   [ + Add Deal ]  [ Profile ] |
++------------------------------------------+
+```
+ 
+---
+ 
+### Flow Navigation
+ 
+**Map Screen**
+```
+[ Map Screen ]
+      |
+      |-- (tap a pin) ---------> [ Deal Detail Screen ]
+      |
+      +-- (tap add button) ----> [ Add Deal Screen ]
+```
+ 
+**Deal Detail Screen**
+```
+[ Deal Detail Screen ]
+      |
+      |-- (back) --------------> [ Map Screen ]
+      |
+      +-- (save/view saved) ---> [ Profile Screen ]
+```
+ 
+**Add Deal Screen**
+```
+[ Add Deal Screen ]
+      |
+      +-- (submit or cancel) --> [ Map Screen ]
+```
+ 
+**Profile Screen**
+```
+[ Profile Screen ]
+      |
+      +-- (tap saved/posted) --> [ Deal Detail Screen ]
+```
+ 
+---
+ 
 ## Wireframes
-
+ 
 [Add picture of your hand sketched wireframes in this section]
-
+ 
 ### [BONUS] Digital Wireframes & Mockups
-
+ 
 ### [BONUS] Interactive Prototype
 
 ## Schema 
