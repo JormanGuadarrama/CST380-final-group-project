@@ -1,7 +1,7 @@
 Original App Design Project - README Template
 ===
 
-# LocalDeals
+# Local Deals Live Map
 
 ## Table of Contents
 
@@ -14,17 +14,16 @@ Original App Design Project - README Template
 
 ### Description
 
-[Provide a brief description of your app, its purpose, and functionality.]
+Local Deals Live Map is a community-driven mobile app that helps users discover nearby deals and discounts in real time. Users can view deals on an interactive map, submit their own deals, and see important details such as discount type and expiration. The app centralizes local savings opportunities that are often hard to find.
 
 ### App Evaluation
 
-[Evaluation of your app across the following attributes]
-- **Category:** [e.g., Social, Entertainment, Education]
-- **Mobile:** [Is it a mobile application only?]
-- **Story:**  [What story does your app tell?]
-- **Market:** [Target audience for the app]
-- **Habit:** [Is it a daily use app or occasional use?]
-- **Scope:** [Is it a broad or narrow app in terms of features?]
+- **Category:** Lifestyle / Community-driven map app  
+- **Mobile:** Mobile-first application that uses maps, GPS/location services, camera (for deal photos), and push notifications  
+- **Story:** People frequently miss nearby deals because promotions are scattered or only visible in-store. This app helps users discover and share local deals in one centralized platform  
+- **Market:** Broad audience of local shoppers, starting with Monterey County and scalable to other regions  
+- **Habit:** Users may check the app multiple times per week when planning purchases; contributors may use it more frequently  
+- **Scope:** Narrow initial scope (map + deals), with clear expansion opportunities such as voting, saved deals, notifications, and AI-powered recommendations  
 
 ## Product Spec
 
@@ -32,42 +31,60 @@ Original App Design Project - README Template
 
 **Required Must-have Stories**
 
-* [User can [specific action, e.g., register an account]]
-* ...
+* User can view nearby deals displayed as pins on a map  
+* User can tap on a pin to view deal details (name, discount, expiration)  
+* User can add a new deal with location, description, and expiration  
+* User can view the map centered around their current location  
 
 **Optional Nice-to-have Stories**
 
-* [User can [specific action, e.g., persist user information across working sessions]]
-* ...
+* User can upvote or downvote deals to verify accuracy  
+* User can upload photos of deals using their camera  
+* User can receive push notifications when deals are nearby  
+* User can create an account to track their contributions  
+* User can save/bookmark deals or locations for later viewing  
+* User can receive AI-based deal recommendations (Gemini integration)  
 
 ### 2. Screen Archetypes
 
-- [ ] [**Screen Name, e.g., Login Screen**]
-* [Required User Feature: User can log in.]
-- [ ] [**Another Screen Name**]
-* [Associated required user story]
-...
-...
-...
+- [ ] **Map Screen (Home)**
+* Required User Feature: User can view nearby deals on a map  
+* Required User Feature: User can tap a deal pin to view details  
+
+- [ ] **Deal Detail Screen**
+* Required User Feature: User can view detailed information about a deal  
+* Optional User Feature: User can save/bookmark a deal  
+
+- [ ] **Add Deal Screen**
+* Required User Feature: User can submit a new deal  
+
+- [ ] **Profile Screen**
+* Optional User Feature: User can view saved/bookmarked deals  
+* Optional User Feature: User can view previously submitted deals  
 
 ### 3. Navigation
 
 **Tab Navigation** (Tab to Screen)
 
-
-- [ ] [First Tab, e.g., Home Feed]
-- [ ] [Second Tab, e.g., Profile]
-...
-...
-...
+- [ ] Map (Home)  
+- [ ] Add Deal  
+- [ ] Profile  
 
 **Flow Navigation** (Screen to Screen)
 
-- [ ] [**Screen Name**]
-  * Leads to [**Next Screen**]
-- [ ] [**Another Screen Name**]
-  * Leads to [**Another Screen**] 
+- [ ] **Map Screen**
+  * Leads to **Deal Detail Screen** (tap a pin)  
+  * Leads to **Add Deal Screen** (tap add button)  
 
+- [ ] **Deal Detail Screen**
+  * Leads to **Map Screen** (back)  
+  * Leads to **Profile Screen** (if saving/viewing saved deals)  
+
+- [ ] **Add Deal Screen**
+  * Leads to **Map Screen** (after submission or cancel)  
+
+- [ ] **Profile Screen**
+  * Leads to **Deal Detail Screen** (view saved or posted deals)  
 
 ## Wireframes
 
@@ -79,22 +96,57 @@ Original App Design Project - README Template
 
 ## Schema 
 
+> ⚠️ Note: The following schema is preliminary and subject to change as the app design evolves. It represents our current brainstorming and may be refined during implementation.
 
 ### Models
 
-[Model Name, e.g., User]
-| Property | Type   | Description                                  |
-|----------|--------|----------------------------------------------|
-| username | String | unique id for the user post (default field)   |
-| password | String | user's password for login authentication      |
-| ...      | ...    | ...                          
+**Deal**
+| Property     | Type    | Description                                      |
+|--------------|---------|--------------------------------------------------|
+| id           | String  | unique identifier for the deal                   |
+| title        | String  | name of the deal or business                     |
+| description  | String  | details about the deal                           |
+| latitude     | Double  | location latitude                                |
+| longitude    | Double  | location longitude                               |
+| discountType | String  | type of discount (e.g., %, BOGO)                 |
+| expiration   | Date    | expiration date of the deal                      |
+| imageUrl     | String  | optional image of the deal                       |
+| votes        | Int     | upvote/downvote score                            |
 
+**User (Optional)**
+| Property | Type   | Description                          |
+|----------|--------|--------------------------------------|
+| id       | String | unique user id                       |
+| username | String | user's display name                  |
+| email    | String | user's email                         |
+
+**SavedDeal (Optional)**
+| Property | Type   | Description                          |
+|----------|--------|--------------------------------------|
+| userId   | String | reference to user                    |
+| dealId   | String | reference to saved deal              |
 
 ### Networking
 
-- [List of network requests by screen]
-- [Example: `[GET] /users` - to retrieve user data]
-- ...
-- [Add list of network requests by screen ]
-- [Create basic snippets for each Parse network request]
-- [OPTIONAL: List endpoints if using existing API such as Yelp]
+- **Map Screen**
+  - `[GET] /deals` - retrieve all deals for map display  
+
+- **Deal Detail Screen**
+  - `[GET] /deals/:id` - retrieve details for a specific deal  
+
+- **Add Deal Screen**
+  - `[POST] /deals` - submit a new deal  
+
+- **Voting (Optional)**
+  - `[POST] /deals/:id/vote` - upvote/downvote a deal  
+
+- **Saved Deals (Optional)**
+  - `[POST] /saved` - save/bookmark a deal  
+  - `[GET] /saved` - retrieve saved deals for a user  
+
+- **Image Upload (Optional)**
+  - `[POST] /upload` - upload deal image  
+
+- **External APIs**
+  - Coupon/Deals APIs (Groupon, RetailMeNot, RapidAPI)  
+  - Maps API (Google Maps SDK or Apple MapKit)  
