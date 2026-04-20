@@ -60,7 +60,9 @@ struct MapView: View {
             .navigationTitle("Local Deals")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showAddDeal) {
-                AddDealView()
+                NavigationStack {
+                    AddDealView()
+                }
             }
             .sheet(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)

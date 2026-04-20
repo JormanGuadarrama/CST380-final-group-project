@@ -23,7 +23,7 @@ class DealManager {
                 return
             }
 
-            let fetchedDeals = documents.compactMap { document in
+            let fetchedDeals: [Deal] = documents.compactMap { document in
                 let data = document.data()
 
                 guard
@@ -33,12 +33,13 @@ class DealManager {
                     let discountType = data["discountType"] as? String,
                     let expirationTimestamp = data["expiration"] as? Timestamp,
                     let imageUrl = data["imageUrl"] as? String,
-                    let location = data["location"] as? GeoPoint,
-                    let votes = data["votes"] as? Int
+                    let location = data["location"] as? GeoPoint
                 else {
                     print("Skipping invalid document: \(document.documentID)")
                     return nil
                 }
+
+                let votes = data["votes"] as? Int ?? 0
 
                 return Deal(
                     id: document.documentID,

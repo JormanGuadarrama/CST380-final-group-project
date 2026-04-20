@@ -1,10 +1,3 @@
-//
-//  AddDealView.swift
-//  LocalDeals
-//
-//  Form for submitting a new deal to Firestore.
-//
-
 import SwiftUI
 
 struct AddDealView: View {
@@ -23,84 +16,87 @@ struct AddDealView: View {
     private let discountTypes = ["Percent Off", "Dollar Off", "BOGO", "Other"]
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Deal Info") {
-                    TextField("Title (e.g. $5 Off Margarita Flights)", text: $title)
-                    TextField("Business Name", text: $businessName)
-                    TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+        Form {
+            Section("Deal Info") {
+                TextField("Title (e.g. $5 Off Margarita Flights)", text: $title)
+                TextField("Business Name", text: $businessName)
+                TextField("Description", text: $description, axis: .vertical)
+                    .lineLimit(3...6)
+            }
 
-                Section("Location") {
-                    TextField("Latitude", text: $latitudeText)
-                        .keyboardType(.decimalPad)
+            Section("Location") {
+                TextField("Latitude", text: $latitudeText)
+                    .keyboardType(.decimalPad)
 
-                    TextField("Longitude", text: $longitudeText)
-                        .keyboardType(.decimalPad)
+                TextField("Longitude", text: $longitudeText)
+                    .keyboardType(.decimalPad)
 
-                    Button(action: { /* TODO: open map picker */ }) {
-                        Label("Pick on Map", systemImage: "map")
-                    }
-                }
-
-                Section("Discount") {
-                    Picker("Type", selection: $discountType) {
-                        ForEach(discountTypes, id: \.self) { Text($0) }
-                    }
-                }
-
-                Section("Expiration") {
-                    DatePicker("Expires", selection: $expiration, displayedComponents: .date)
-                }
-
-                Section("Image") {
-                    TextField("Image URL (optional)", text: $imageUrl)
+                Button(action: { /* TODO: open map picker */ }) {
+                    Label("Pick on Map", systemImage: "map")
                 }
             }
-            .navigationTitle("Add Deal")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+            Section("Discount") {
+                Picker("Type", selection: $discountType) {
+                    ForEach(discountTypes, id: \.self) { Text($0) }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
-                        guard
-                            let latitude = Double(latitudeText),
-                            let longitude = Double(longitudeText)
-                        else {
-                            print("Invalid latitude or longitude")
-                            return
-                        }
+            }
 
-                        dealManager.addDeal(
-                            title: title,
-                            businessName: businessName,
-                            description: description,
-                            discountType: discountType,
-                            expiration: expiration,
-                            imageUrl: imageUrl,
-                            latitude: latitude,
-                            longitude: longitude
-                        )
+            Section("Expiration") {
+                DatePicker("Expires", selection: $expiration, displayedComponents: .date)
+            }
 
-                        dismiss()
+            Section("Image") {
+                TextField("Image URL (optional)", text: $imageUrl)
+            }
+        }
+        .navigationTitle("Add Deal")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") {
+                    dismiss()
+                }
+            }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Submit") {
+                    guard
+                        let latitude = Double(latitudeText),
+                        let longitude = Double(longitudeText)
+                    else {
+                        print("Invalid latitude or longitude")
+                        return
                     }
-                    .disabled(
-                        title.isEmpty ||
-                        businessName.isEmpty ||
-                        description.isEmpty ||
-                        latitudeText.isEmpty ||
-                        longitudeText.isEmpty
+
+                    dealManager.addDeal(
+                        title: title,
+                        businessName: businessName,
+                        description: description,
+                        discountType: discountType,
+                        expiration: expiration,
+                        imageUrl: imageUrl,
+                        latitude: latitude,
+                        longitude: longitude
                     )
+
+                    dismiss()
                 }
+                .disabled(
+                    title.isEmpty ||
+                    businessName.isEmpty ||
+                    description.isEmpty ||
+                    latitudeText.isEmpty ||
+                    longitudeText.isEmpty
+                )
             }
         }
     }
 }
 
 #Preview {
-    AddDealView()
-        .environment(DealManager(isMocked: true))
+    NavigationStack {
+        AddDealView()
+            .environment(DealManager(isMocked: true))
+    }
 }
