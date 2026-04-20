@@ -10,12 +10,17 @@ import FirebaseCore
 
 @main
 struct LocalDealsApp: App {
-    init() { 
-          FirebaseApp.configure()
-      }
+    @State private var dealManager: DealManager
+
+    init() {
+        FirebaseApp.configure()
+        dealManager = DealManager()
+    }
+
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                .environment(dealManager)
         }
     }
 }
