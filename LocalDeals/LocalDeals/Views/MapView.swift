@@ -7,7 +7,7 @@
 
 import SwiftUI
 import MapKit
-internal import FirebaseFirestoreInternal
+import FirebaseFirestoreInternal
 
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
@@ -60,9 +60,7 @@ struct MapView: View {
             .navigationTitle("Local Deals")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showAddDeal) {
-                NavigationStack {
-                    AddDealView()
-                }
+                AddDealView()
             }
             .sheet(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)
