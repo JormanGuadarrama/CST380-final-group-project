@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import FirebaseCore
 
 @main
 struct LocalDealsApp: App {
+    init() { 
+          FirebaseApp.configure()
+      }
     var body: some Scene {
         WindowGroup {
             MainTabView()
