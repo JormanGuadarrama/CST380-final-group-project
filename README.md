@@ -52,6 +52,10 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
  
 ---
 
+## Demo
+
+![App Demo](images/Sequence.gif)
+
 ## Current Progress
 
 - Firestore backend fully integrated
