@@ -51,6 +51,16 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 * **13 pts** — User can receive AI-based deal recommendations (Gemini integration) — requires prompt engineering, API integration, and personalization logic based on user behavior
  
 ---
+
+## Current Progress
+
+- Firestore backend fully integrated
+- Deals are fetched and displayed on map in real time
+- Users can submit new deals through the app
+- Deal detail view displays formatted expiration and discount info
+- Mock data replaced with live backend data
+- Mapkit Foundation Implemented
+- Skeletal framework of views added/partially implemented
  
 ## 2. Screen Archetypes
  
