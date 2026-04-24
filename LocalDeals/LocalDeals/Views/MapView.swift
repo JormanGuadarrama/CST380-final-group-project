@@ -11,6 +11,7 @@ import FirebaseFirestoreInternal
 
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
+    @State private var locationManager = LocationManager()
 
     @State private var position = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -64,6 +65,23 @@ struct MapView: View {
             }
             .sheet(item: $selectedDeal) { deal in
                 DealDetailView(deal: deal)
+            }
+            .onAppear {
+                locationManager.requestLocation()
+            }
+            
+            .onChange(of: locationManager.userLocation?.latitude) { _, _ in
+                if let location = locationManager.userLocation {
+                    position = .region(
+                        MKCoordinateRegion(
+                            center: location,
+                            span: MKCoordinateSpan(
+                                latitudeDelta: 0.05,
+                                longitudeDelta: 0.05
+                            )
+                        )
+                    )
+                }
             }
         }
     }

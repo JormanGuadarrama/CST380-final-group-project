@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct AddDealView: View {
     @Environment(DealManager.self) var dealManager
@@ -19,6 +20,9 @@ struct AddDealView: View {
     @State private var expiration: Date = Date()
     @State private var discountType: String = "Percent Off"
     @State private var imageUrl: String = ""
+    
+    @State private var showMapPicker = false
+    @State private var selectedCoordinate: CLLocationCoordinate2D?
 
     private let discountTypes = ["Percent Off", "Dollar Off", "BOGO", "Other"]
 
@@ -39,8 +43,16 @@ struct AddDealView: View {
                     TextField("Longitude", text: $longitudeText)
                         .keyboardType(.decimalPad)
 
-                    Button(action: { /* TODO: open map picker */ }) {
+                    Button {
+                        showMapPicker = true
+                    } label: {
                         Label("Pick on Map", systemImage: "map")
+                    }
+
+                    if let selectedCoordinate {
+                        Text("Selected: \(selectedCoordinate.latitude), \(selectedCoordinate.longitude)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -94,6 +106,13 @@ struct AddDealView: View {
                         latitudeText.isEmpty ||
                         longitudeText.isEmpty
                     )
+                }
+            }
+            .sheet(isPresented: $showMapPicker) {
+                MapPickerView { coordinate in
+                    selectedCoordinate = coordinate
+                    latitudeText = String(coordinate.latitude)
+                    longitudeText = String(coordinate.longitude)
                 }
             }
         }
