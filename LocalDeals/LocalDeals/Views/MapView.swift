@@ -2,13 +2,16 @@
 //  MapView.swift
 //  LocalDeals
 //
-//  Map (Home) screen — empty map view with "+Add Deal" button placeholder.
+//  Map (Home) screen — displays deals fetched from Firestore.
 //
 
 import SwiftUI
 import MapKit
+import FirebaseFirestoreInternal
 
 struct MapView: View {
+    @Environment(DealManager.self) var dealManager
+
     @State private var position = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
@@ -19,25 +22,20 @@ struct MapView: View {
     @State private var showAddDeal = false
     @State private var selectedDeal: Deal?
 
-    // TODO: Replace with deals fetched from backend (#6, #16, #17)
-    let sampleDeals: [Deal] = [
-        Deal(
-            title: "$5 Off Margarita Flights",
-            businessName: "The Brass Tap",
-            description: "$5 off margarita flights",
-            expiration: "Every Monday",
-            coordinate: CLLocationCoordinate2D(latitude: 36.664856, longitude: -121.811935)
-        )
-    ]
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 Map(position: $position) {
-                    ForEach(sampleDeals) { deal in
-                        Annotation(deal.businessName, coordinate: deal.coordinate) {
+                    ForEach(dealManager.deals) { deal in
+                        Annotation(
+                            deal.businessName,
+                            coordinate: CLLocationCoordinate2D(
+                                latitude: deal.location.latitude,
+                                longitude: deal.location.longitude
+                            )
+                        ) {
                             Image(systemName: "mappin.circle.fill")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .font(.title)
                                 .onTapGesture {
                                     selectedDeal = deal
@@ -53,7 +51,7 @@ struct MapView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(Color.accentColor)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .clipShape(Capsule())
                         .shadow(radius: 4)
                 }
@@ -73,4 +71,5 @@ struct MapView: View {
 
 #Preview {
     MapView()
+        .environment(DealManager(isMocked: true))
 }

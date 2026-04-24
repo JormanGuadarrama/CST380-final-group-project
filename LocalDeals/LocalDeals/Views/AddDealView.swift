@@ -2,19 +2,23 @@
 //  AddDealView.swift
 //  LocalDeals
 //
-//  Empty form for submitting a new deal — title, description, location, expiration.
+//  Form for submitting a new deal to Firestore.
 //
 
 import SwiftUI
 
 struct AddDealView: View {
+    @Environment(DealManager.self) var dealManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var title: String = ""
+    @State private var businessName: String = ""
     @State private var description: String = ""
-    @State private var locationText: String = ""
+    @State private var latitudeText: String = ""
+    @State private var longitudeText: String = ""
     @State private var expiration: Date = Date()
     @State private var discountType: String = "Percent Off"
+    @State private var imageUrl: String = ""
 
     private let discountTypes = ["Percent Off", "Dollar Off", "BOGO", "Other"]
 
@@ -23,13 +27,18 @@ struct AddDealView: View {
             Form {
                 Section("Deal Info") {
                     TextField("Title (e.g. $5 Off Margarita Flights)", text: $title)
+                    TextField("Business Name", text: $businessName)
                     TextField("Description", text: $description, axis: .vertical)
                         .lineLimit(3...6)
                 }
 
                 Section("Location") {
-                    TextField("Address or business name", text: $locationText)
-                    // TODO: replace with map picker / GPS
+                    TextField("Latitude", text: $latitudeText)
+                        .keyboardType(.decimalPad)
+
+                    TextField("Longitude", text: $longitudeText)
+                        .keyboardType(.decimalPad)
+
                     Button(action: { /* TODO: open map picker */ }) {
                         Label("Pick on Map", systemImage: "map")
                     }
@@ -44,6 +53,10 @@ struct AddDealView: View {
                 Section("Expiration") {
                     DatePicker("Expires", selection: $expiration, displayedComponents: .date)
                 }
+
+                Section("Image") {
+                    TextField("Image URL (optional)", text: $imageUrl)
+                }
             }
             .navigationTitle("Add Deal")
             .navigationBarTitleDisplayMode(.inline)
@@ -53,10 +66,34 @@ struct AddDealView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
-                        // TODO: submit to backend (#6)
+                        guard
+                            let latitude = Double(latitudeText),
+                            let longitude = Double(longitudeText)
+                        else {
+                            print("Invalid latitude or longitude")
+                            return
+                        }
+
+                        dealManager.addDeal(
+                            title: title,
+                            businessName: businessName,
+                            description: description,
+                            discountType: discountType,
+                            expiration: expiration,
+                            imageUrl: imageUrl,
+                            latitude: latitude,
+                            longitude: longitude
+                        )
+
                         dismiss()
                     }
-                    .disabled(title.isEmpty)
+                    .disabled(
+                        title.isEmpty ||
+                        businessName.isEmpty ||
+                        description.isEmpty ||
+                        latitudeText.isEmpty ||
+                        longitudeText.isEmpty
+                    )
                 }
             }
         }
@@ -65,4 +102,5 @@ struct AddDealView: View {
 
 #Preview {
     AddDealView()
+        .environment(DealManager(isMocked: true))
 }
