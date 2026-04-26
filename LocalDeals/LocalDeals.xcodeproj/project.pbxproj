@@ -57,10 +57,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		847CB3652F9EA5A700EEF0B2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		84F2442E2F8C274000312E0A = {
 			isa = PBXGroup;
 			children = (
 				84F244392F8C274000312E0A /* LocalDeals */,
+				847CB3652F9EA5A700EEF0B2 /* Frameworks */,
 				84F244382F8C274000312E0A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -291,7 +299,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8WJC4YA944;
+				DEVELOPMENT_TEAM = X93W42LNZZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LocalDeals/Info.plist;
@@ -307,7 +315,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReneReyes.LocalDeals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.KevinCrapo.LocalDeals;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -326,7 +334,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8WJC4YA944;
+				DEVELOPMENT_TEAM = X93W42LNZZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LocalDeals/Info.plist;
@@ -342,7 +350,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ReneReyes.LocalDeals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.KevinCrapo.LocalDeals;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

@@ -64,11 +64,7 @@ final class AuthManager {
         }
     }
 
-    deinit {
-        if let handle {
-            Auth.auth().removeStateDidChangeListener(handle)
-        }
-    }
+
 
     func signUp(email: String, password: String, username: String) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()

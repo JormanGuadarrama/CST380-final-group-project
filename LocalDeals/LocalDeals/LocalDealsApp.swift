@@ -1,6 +1,6 @@
 import SwiftUI
 import FirebaseCore
-
+import FirebaseAuth
 @main
 struct LocalDealsApp: App {
     @State private var dealManager: DealManager

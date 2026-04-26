@@ -1,3 +1,11 @@
+//
+//  DealManager.swift
+//  LocalDeals
+//
+//  Created by Kevin Crapo on 4/26/26.
+//
+
+
 import Foundation
 import FirebaseFirestore
 import Observation
@@ -21,11 +29,6 @@ final class DealManager {
         } else {
             listenForDeals()
         }
-    }
-
-    deinit {
-        dealsListener?.remove()
-        userDealsListener?.remove()
     }
 
     var savedDeals: [Deal] {
