@@ -1,16 +1,12 @@
-//
-//  AddDealView.swift
-//  LocalDeals
-//
-//  Form for submitting a new deal to Firestore.
-//
-
 import SwiftUI
 import CoreLocation
 
 struct AddDealView: View {
     @Environment(DealManager.self) var dealManager
+    @Environment(AuthManager.self) var authManager
     @Environment(\.dismiss) private var dismiss
+
+    @State private var locationManager = LocationManager()
 
     @State private var title: String = ""
     @State private var businessName: String = ""
@@ -20,7 +16,7 @@ struct AddDealView: View {
     @State private var expiration: Date = Date()
     @State private var discountType: String = "Percent Off"
     @State private var imageUrl: String = ""
-    
+
     @State private var showMapPicker = false
     @State private var selectedCoordinate: CLLocationCoordinate2D?
 
@@ -91,38 +87,49 @@ struct AddDealView: View {
                         dismiss()
                     }
                 }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
                         guard
                             let latitude = Double(latitudeText),
-                            let longitude = Double(longitudeText)
+                            let longitude = Double(longitudeText),
+                            let createdByUid = authManager.userID,
+                            let createdByEmail = authManager.userEmail
                         else {
-                            print("Invalid latitude or longitude")
+                            print("Missing coordinates or authenticated user.")
                             return
                         }
 
-                        dealManager.addDeal(
-                            title: title,
-                            businessName: businessName,
-                            description: description,
-                            discountType: discountType,
-                            expiration: expiration,
-                            imageUrl: imageUrl,
-                            latitude: latitude,
-                            longitude: longitude
-                        )
+                        Task {
+                            await dealManager.addDeal(
+                                title: title,
+                                businessName: businessName,
+                                description: description,
+                                discountType: discountType,
+                                expiration: expiration,
+                                imageUrl: imageUrl,
+                                latitude: latitude,
+                                longitude: longitude,
+                                createdByUid: createdByUid,
+                                createdByEmail: createdByEmail
+                            )
 
-                        resetForm()
-                        dismiss()
+                            resetForm()
+                            dismiss()
+                        }
                     }
                     .disabled(
-                        title.isEmpty ||
-                        businessName.isEmpty ||
-                        description.isEmpty ||
-                        latitudeText.isEmpty ||
-                        longitudeText.isEmpty
+                        title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        latitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        longitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     )
                 }
+            }
+            .onAppear {
+                locationManager.requestPermission()
+                locationManager.startUpdating()
             }
             .sheet(isPresented: $showMapPicker) {
                 MapPickerView { coordinate in
@@ -130,6 +137,7 @@ struct AddDealView: View {
                     latitudeText = String(coordinate.latitude)
                     longitudeText = String(coordinate.longitude)
                 }
+                .environment(locationManager)
             }
         }
     }
@@ -138,4 +146,5 @@ struct AddDealView: View {
 #Preview {
     AddDealView()
         .environment(DealManager(isMocked: true))
+        .environment(AuthManager(isMocked: true))
 }

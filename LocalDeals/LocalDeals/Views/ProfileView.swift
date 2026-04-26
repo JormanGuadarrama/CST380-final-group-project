@@ -2,29 +2,53 @@ import SwiftUI
 
 struct ProfileView: View {
     @Environment(DealManager.self) var dealManager
-
-    var savedDeals: [Deal] { dealManager.savedDeals }
+    @Environment(AuthManager.self) var authManager
 
     var body: some View {
         NavigationStack {
             List {
+                Section("Account") {
+                    if let user = authManager.user {
+                        Text(user.email)
+                            .font(.subheadline)
+
+                        Text("Username: \(user.username)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("Provider: \(user.provider)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if let email = authManager.userEmail {
+                        Text(email)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button("Sign Out", role: .destructive) {
+                        authManager.signOut()
+                    }
+                }
+
                 Section("Saved Deals") {
-                    if savedDeals.isEmpty {
+                    if dealManager.savedDeals.isEmpty {
                         Text("No saved deals yet.")
                             .foregroundColor(.secondary)
                     } else {
-                        ForEach(savedDeals) { deal in
+                        ForEach(dealManager.savedDeals) { deal in
                             DealRow(deal: deal)
                         }
                     }
                 }
 
                 Section("Submitted Deals") {
-                    if dealManager.deals.isEmpty {
+                    let submitted = dealManager.submittedDeals(for: authManager.userID)
+
+                    if submitted.isEmpty {
                         Text("No submitted deals yet.")
                             .foregroundColor(.secondary)
                     } else {
-                        ForEach(dealManager.deals) { deal in
+                        ForEach(submitted) { deal in
                             DealRow(deal: deal)
                         }
                     }
@@ -57,4 +81,6 @@ private struct DealRow: View {
 #Preview {
     ProfileView()
         .environment(DealManager(isMocked: true))
+        .environment(AuthManager(isMocked: true))
 }
+

@@ -30,4 +30,6 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environment(DealManager(isMocked: true))
+        .environment(AuthManager(isMocked: true))
 }
