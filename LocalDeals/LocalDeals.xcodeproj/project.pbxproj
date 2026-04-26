@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		84AFAF792F95A64C0009AF94 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF782F95A64C0009AF94 /* FirebaseAuth */; };
+		84AFAF7B2F95A64C0009AF94 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7A2F95A64C0009AF94 /* FirebaseFirestore */; };
+		84AFAF7D2F95A64C0009AF94 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7C2F95A64C0009AF94 /* FirebaseFunctions */; };
+		84AFAF7F2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7E2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		84F244372F8C274000312E0A /* LocalDeals.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LocalDeals.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +30,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84AFAF7D2F95A64C0009AF94 /* FirebaseFunctions in Frameworks */,
+				84AFAF792F95A64C0009AF94 /* FirebaseAuth in Frameworks */,
+				84AFAF7B2F95A64C0009AF94 /* FirebaseFirestore in Frameworks */,
+				84AFAF7F2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +76,10 @@
 			);
 			name = LocalDeals;
 			packageProductDependencies = (
+				84AFAF782F95A64C0009AF94 /* FirebaseAuth */,
+				84AFAF7A2F95A64C0009AF94 /* FirebaseFirestore */,
+				84AFAF7C2F95A64C0009AF94 /* FirebaseFunctions */,
+				84AFAF7E2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community */,
 			);
 			productName = LocalDeals;
 			productReference = 84F244372F8C274000312E0A /* LocalDeals.app */;
@@ -94,6 +109,9 @@
 			);
 			mainGroup = 84F2442E2F8C274000312E0A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84F244382F8C274000312E0A /* Products */;
 			projectDirPath = "";
@@ -253,9 +271,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = X93W42LNZZ;
+				DEVELOPMENT_TEAM = 8WJC4YA944;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show nearby local deals";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -267,7 +286,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.KevinCrapo.LocalDeals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReneReyes.LocalDeals;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -286,9 +305,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = X93W42LNZZ;
+				DEVELOPMENT_TEAM = 8WJC4YA944;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show nearby local deals";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -300,7 +320,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.KevinCrapo.LocalDeals;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ReneReyes.LocalDeals;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -334,6 +354,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.12.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		84AFAF782F95A64C0009AF94 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		84AFAF7A2F95A64C0009AF94 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		84AFAF7C2F95A64C0009AF94 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
+		84AFAF7E2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFunctionsCombine-Community";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 84F2442F2F8C274000312E0A /* Project object */;
 }

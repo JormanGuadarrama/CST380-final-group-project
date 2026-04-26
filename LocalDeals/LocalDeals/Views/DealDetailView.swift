@@ -2,12 +2,19 @@
 //  DealDetailView.swift
 //  LocalDeals
 //
+//  Detail card layout showing store name, discount, and expiration.
+//
 
 import SwiftUI
-import CoreLocation
+import FirebaseFirestore
 
 struct DealDetailView: View {
     let deal: Deal
+    @Environment(DealManager.self) var dealManager
+
+    private var formattedExpiration: String {
+        deal.expiration.formatted(date: .abbreviated, time: .omitted)
+    }
 
     var body: some View {
         ScrollView {
@@ -35,14 +42,15 @@ struct DealDetailView: View {
                         InfoPill(icon: "car", text: "— min drive")
                     }
 
-                    Divider()
+                Text("Details")
+                    .font(.headline)
 
                     Text("Details")
                         .font(.headline)
                     Text(deal.description.isEmpty ? "No additional details." : deal.description)
                         .font(.body)
 
-                    Spacer(minLength: 20)
+                Spacer(minLength: 20)
 
                     // Save / bookmark placeholder (TODO: #12)
                     Button(action: { /* TODO: save deal */ }) {
