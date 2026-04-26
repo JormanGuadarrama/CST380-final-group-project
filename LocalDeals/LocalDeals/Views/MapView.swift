@@ -1,7 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-
+import FirebaseFirestoreInternal
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
 
