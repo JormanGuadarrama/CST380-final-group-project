@@ -3,8 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(DealManager.self) var dealManager
 
-    var savedDeals: [Deal] = []
-    var submittedDeals: [Deal] = []
+    var savedDeals: [Deal] { dealManager.savedDeals }
 
     var body: some View {
         NavigationStack {

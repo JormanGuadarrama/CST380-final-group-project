@@ -26,6 +26,18 @@ struct AddDealView: View {
 
     private let discountTypes = ["Percent Off", "Dollar Off", "BOGO", "Other"]
 
+    private func resetForm() {
+        title = ""
+        businessName = ""
+        description = ""
+        latitudeText = ""
+        longitudeText = ""
+        expiration = Date()
+        discountType = "Percent Off"
+        imageUrl = ""
+        selectedCoordinate = nil
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -74,7 +86,10 @@ struct AddDealView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        resetForm()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
@@ -97,6 +112,7 @@ struct AddDealView: View {
                             longitude: longitude
                         )
 
+                        resetForm()
                         dismiss()
                     }
                     .disabled(

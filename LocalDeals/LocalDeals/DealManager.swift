@@ -5,15 +5,36 @@ import Observation
 @Observable
 class DealManager {
     var deals: [Deal] = []
+    private(set) var savedDealIDs: Set<String>
 
     private let database = Firestore.firestore()
+    private let savedDealsKey = "savedDealIDs"
+
+    var savedDeals: [Deal] {
+        deals.filter { savedDealIDs.contains($0.id) }
+    }
 
     init(isMocked: Bool = false) {
+        let stored = UserDefaults.standard.stringArray(forKey: "savedDealIDs") ?? []
+        savedDealIDs = Set(stored)
         if isMocked {
             deals = Deal.mockedDeals
         } else {
             getDeals()
         }
+    }
+
+    func isSaved(_ deal: Deal) -> Bool {
+        savedDealIDs.contains(deal.id)
+    }
+
+    func toggleSave(_ deal: Deal) {
+        if savedDealIDs.contains(deal.id) {
+            savedDealIDs.remove(deal.id)
+        } else {
+            savedDealIDs.insert(deal.id)
+        }
+        UserDefaults.standard.set(Array(savedDealIDs), forKey: savedDealsKey)
     }
 
     func getDeals() {
