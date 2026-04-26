@@ -4,8 +4,9 @@ import CoreLocation
 struct AddDealView: View {
     @Environment(DealManager.self) var dealManager
     @Environment(AuthManager.self) var authManager
-    @Environment(LocationManager.self) var locationManager
     @Environment(\.dismiss) private var dismiss
+
+    @State private var locationManager = LocationManager()
 
     @State private var title: String = ""
     @State private var businessName: String = ""
@@ -126,6 +127,10 @@ struct AddDealView: View {
                     )
                 }
             }
+            .onAppear {
+                locationManager.requestPermission()
+                locationManager.startUpdating()
+            }
             .sheet(isPresented: $showMapPicker) {
                 MapPickerView { coordinate in
                     selectedCoordinate = coordinate
@@ -142,5 +147,4 @@ struct AddDealView: View {
     AddDealView()
         .environment(DealManager(isMocked: true))
         .environment(AuthManager(isMocked: true))
-        .environment(LocationManager())
 }

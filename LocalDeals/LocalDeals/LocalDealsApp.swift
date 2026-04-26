@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseCore
 import FirebaseAuth
+
 @main
 struct LocalDealsApp: App {
     @State private var dealManager: DealManager
@@ -28,6 +29,10 @@ struct LocalDealsApp: App {
             }
             .task(id: authManager.firebaseUser?.uid) {
                 dealManager.handleAuthChange(userID: authManager.userID)
+
+                if authManager.firebaseUser != nil {
+                    await dealManager.seedMockDealsIfNeeded()
+                }
             }
         }
     }

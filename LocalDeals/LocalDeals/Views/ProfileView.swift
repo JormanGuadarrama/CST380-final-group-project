@@ -83,3 +83,4 @@ private struct DealRow: View {
         .environment(DealManager(isMocked: true))
         .environment(AuthManager(isMocked: true))
 }
+

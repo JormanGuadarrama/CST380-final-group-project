@@ -5,8 +5,8 @@
 //  Created by Kevin Crapo on 4/26/26.
 //
 
-
 import Foundation
+import FirebaseAuth
 import FirebaseFirestore
 import Observation
 
@@ -64,6 +64,60 @@ final class DealManager {
                 let ids = snapshot?.documents.compactMap { $0.data()["dealId"] as? String } ?? []
                 self.savedDealIDs = Set(ids)
             }
+    }
+
+    func seedMockDealsIfNeeded() async {
+        guard let currentUser = Auth.auth().currentUser else {
+            print("No authenticated user. Skipping mock deal seeding.")
+            return
+        }
+
+        let seedRef = database.collection("appMetadata").document("mockDealSeed")
+
+        do {
+            let seedSnapshot = try await seedRef.getDocument()
+
+            if seedSnapshot.exists {
+                print("Mock deals already seeded.")
+                return
+            }
+
+            let batch = database.batch()
+            let now = Date()
+
+            for deal in Deal.mockedDeals {
+                let dealRef = database.collection("deals").document(deal.id)
+
+                let dealData: [String: Any] = [
+                    "title": deal.title,
+                    "businessName": deal.businessName,
+                    "description": deal.description,
+                    "discountType": deal.discountType,
+                    "expiration": Timestamp(date: deal.expiration),
+                    "imageUrl": deal.imageUrl,
+                    "location": deal.location,
+                    "votes": deal.votes,
+                    "createdByUid": currentUser.uid,
+                    "createdByEmail": currentUser.email ?? "unknown@email.com",
+                    "createdAt": Timestamp(date: deal.createdAt ?? now)
+                ]
+
+                batch.setData(dealData, forDocument: dealRef, merge: true)
+            }
+
+            batch.setData([
+                "seeded": true,
+                "seedName": "mockDeals",
+                "seededByUid": currentUser.uid,
+                "dealIDs": Deal.mockedDeals.map(\.id),
+                "createdAt": Timestamp(date: now)
+            ], forDocument: seedRef)
+
+            try await batch.commit()
+            print("Mock deals seeded successfully.")
+        } catch {
+            print("Error seeding mock deals: \(error.localizedDescription)")
+        }
     }
 
     private func listenForDeals() {

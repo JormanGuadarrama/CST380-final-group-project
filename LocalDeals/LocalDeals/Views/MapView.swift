@@ -2,18 +2,17 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import FirebaseFirestoreInternal
+
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
 
     @State private var locationManager = LocationManager()
+    @State private var hasCenteredOnUser = false
 
-    @State private var position: MapCameraPosition = .userLocation(
-        followsHeading: false,
-        fallback: .region(
-            MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            )
+    @State private var position: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     )
 
@@ -46,10 +45,7 @@ struct MapView: View {
                     }
 
                     if let currentLocation = locationManager.currentLocation {
-                        Annotation(
-                            "You",
-                            coordinate: currentLocation.coordinate
-                        ) {
+                        Annotation("You", coordinate: currentLocation.coordinate) {
                             Image(systemName: "location.circle.fill")
                                 .foregroundStyle(.blue)
                                 .font(.title2)
@@ -57,18 +53,28 @@ struct MapView: View {
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
+                .onChange(of: locationManager.currentLocation) { _, newLocation in
+                    guard let newLocation, !hasCenteredOnUser else { return }
+
+                    position = .region(
+                        MKCoordinateRegion(
+                            center: newLocation.coordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                        )
+                    )
+                    hasCenteredOnUser = true
+                }
 
                 VStack(alignment: .trailing, spacing: 12) {
                     Button {
-                        position = .userLocation(
-                            followsHeading: false,
-                            fallback: .region(
+                        if let currentLocation = locationManager.currentLocation {
+                            position = .region(
                                 MKCoordinateRegion(
-                                    center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
-                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                    center: currentLocation.coordinate,
+                                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
                                 )
                             )
-                        )
+                        }
                     } label: {
                         Image(systemName: "location.fill")
                             .font(.headline)
