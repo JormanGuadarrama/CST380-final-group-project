@@ -18,6 +18,14 @@ struct AddDealView: View {
 
     private let discountTypes = ["Percent Off", "Dollar Off", "BOGO", "Other"]
 
+    private func resetForm() {
+        title = ""
+        description = ""
+        locationText = ""
+        expiration = Date()
+        discountType = "Percent Off"
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -49,11 +57,15 @@ struct AddDealView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        resetForm()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
                         // TODO: submit to backend (#6)
+                        resetForm()
                         dismiss()
                     }
                     .disabled(title.isEmpty)
