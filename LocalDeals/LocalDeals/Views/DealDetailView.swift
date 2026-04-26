@@ -10,6 +10,7 @@ import FirebaseFirestore
 
 struct DealDetailView: View {
     let deal: Deal
+    @Environment(DealManager.self) var dealManager
 
     private var formattedExpiration: String {
         deal.expiration.formatted(date: .abbreviated, time: .omitted)
@@ -48,13 +49,16 @@ struct DealDetailView: View {
 
                 Spacer(minLength: 20)
 
-                Button(action: { /* TODO: save deal */ }) {
-                    Label("Save Deal", systemImage: "bookmark")
+                Button(action: { dealManager.toggleSave(deal) }) {
+                    let saved = dealManager.isSaved(deal)
+                    Label(saved ? "Saved" : "Save Deal",
+                          systemImage: saved ? "bookmark.fill" : "bookmark")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor.opacity(0.15))
+                        .background(Color.accentColor.opacity(saved ? 0.25 : 0.15))
                         .foregroundColor(.accentColor)
                         .cornerRadius(10)
+                        .animation(.easeInOut(duration: 0.2), value: saved)
                 }
             }
             .padding()
@@ -78,4 +82,5 @@ struct DealDetailView: View {
             votes: 0
         )
     )
+    .environment(DealManager(isMocked: true))
 }
