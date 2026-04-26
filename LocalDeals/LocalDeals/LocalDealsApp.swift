@@ -14,15 +14,20 @@ struct LocalDealsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if authManager.user != nil {
-                MainTabView()
-                    .environment(dealManager)
+            Group {
+                if authManager.firebaseUser != nil {
+                    MainTabView()
+                        .environment(dealManager)
+                        .environment(authManager)
+                } else {
+                    NavigationStack {
+                        LoginView()
+                    }
                     .environment(authManager)
-            } else {
-                NavigationStack {
-                    LoginView()
                 }
-                .environment(authManager)
+            }
+            .task(id: authManager.firebaseUser?.uid) {
+                dealManager.handleAuthChange(userID: authManager.userID)
             }
         }
     }

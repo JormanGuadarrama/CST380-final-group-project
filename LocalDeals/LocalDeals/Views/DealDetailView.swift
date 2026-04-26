@@ -6,11 +6,12 @@
 //
 
 import SwiftUI
-import FirebaseFirestore
 
 struct DealDetailView: View {
     let deal: Deal
+
     @Environment(DealManager.self) var dealManager
+    @Environment(AuthManager.self) var authManager
 
     private var formattedExpiration: String {
         deal.expiration.formatted(date: .abbreviated, time: .omitted)
@@ -19,7 +20,6 @@ struct DealDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Hero card — discount visually prioritized
                 VStack(spacing: 8) {
                     Text(deal.title)
                         .font(.largeTitle)
@@ -35,31 +35,40 @@ struct DealDetailView: View {
                 .background(Color.accentColor.opacity(0.12))
 
                 VStack(alignment: .leading, spacing: 16) {
-                    // Quick-scan info row
                     HStack(spacing: 10) {
-                        InfoPill(icon: "clock", text: deal.expiration)
+                        InfoPill(icon: "tag", text: deal.discountType)
+                        InfoPill(icon: "clock", text: formattedExpiration)
                         InfoPill(icon: "location", text: "— mi")
-                        InfoPill(icon: "car", text: "— min drive")
                     }
-
-                Text("Details")
-                    .font(.headline)
 
                     Text("Details")
                         .font(.headline)
+
                     Text(deal.description.isEmpty ? "No additional details." : deal.description)
                         .font(.body)
 
-                Spacer(minLength: 20)
+                    Text("Posted by: \(deal.createdByEmail)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
 
-                    // Save / bookmark placeholder (TODO: #12)
-                    Button(action: { /* TODO: save deal */ }) {
-                        Label("Save Deal", systemImage: "bookmark")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor.opacity(0.15))
-                            .foregroundColor(.accentColor)
-                            .cornerRadius(10)
+                    Spacer(minLength: 20)
+
+                    Button {
+                        guard let userID = authManager.userID else { return }
+
+                        Task {
+                            await dealManager.toggleSave(deal: deal, userID: userID)
+                        }
+                    } label: {
+                        Label(
+                            dealManager.isSaved(deal) ? "Remove Saved Deal" : "Save Deal",
+                            systemImage: dealManager.isSaved(deal) ? "bookmark.fill" : "bookmark"
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.accentColor.opacity(0.15))
+                        .foregroundColor(.accentColor)
+                        .cornerRadius(10)
                     }
                 }
                 .padding()
@@ -86,12 +95,8 @@ private struct InfoPill: View {
 
 #Preview {
     NavigationStack {
-        DealDetailView(deal: Deal(
-            title: "$5 Off Margarita Flights",
-            businessName: "The Brass Tap",
-            description: "$5 off margarita flights every Monday night.",
-            expiration: "Every Monday",
-            coordinate: CLLocationCoordinate2D(latitude: 36.664856, longitude: -121.811935)
-        ))
+        DealDetailView(deal: Deal.mockedDeals[0])
+            .environment(DealManager(isMocked: true))
+            .environment(AuthManager(isMocked: true))
     }
 }
