@@ -11,15 +11,30 @@
 		84AFAF7B2F95A64C0009AF94 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7A2F95A64C0009AF94 /* FirebaseFirestore */; };
 		84AFAF7D2F95A64C0009AF94 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7C2F95A64C0009AF94 /* FirebaseFunctions */; };
 		84AFAF7F2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 84AFAF7E2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community */; };
+		84D889202F9E8A510063C740 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 84D8891F2F9E8A510063C740 /* GoogleSignIn */; };
+		84D889222F9E8A510063C740 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 84D889212F9E8A510063C740 /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		84F244372F8C274000312E0A /* LocalDeals.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LocalDeals.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		84D889242F9E8B030063C740 /* Exceptions for "LocalDeals" folder in "LocalDeals" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 84F244362F8C274000312E0A /* LocalDeals */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		84F244392F8C274000312E0A /* LocalDeals */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				84D889242F9E8B030063C740 /* Exceptions for "LocalDeals" folder in "LocalDeals" target */,
+			);
 			path = LocalDeals;
 			sourceTree = "<group>";
 		};
@@ -30,8 +45,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84D889202F9E8A510063C740 /* GoogleSignIn in Frameworks */,
 				84AFAF7D2F95A64C0009AF94 /* FirebaseFunctions in Frameworks */,
 				84AFAF792F95A64C0009AF94 /* FirebaseAuth in Frameworks */,
+				84D889222F9E8A510063C740 /* GoogleSignInSwift in Frameworks */,
 				84AFAF7B2F95A64C0009AF94 /* FirebaseFirestore in Frameworks */,
 				84AFAF7F2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community in Frameworks */,
 			);
@@ -80,6 +97,8 @@
 				84AFAF7A2F95A64C0009AF94 /* FirebaseFirestore */,
 				84AFAF7C2F95A64C0009AF94 /* FirebaseFunctions */,
 				84AFAF7E2F95A64C0009AF94 /* FirebaseFunctionsCombine-Community */,
+				84D8891F2F9E8A510063C740 /* GoogleSignIn */,
+				84D889212F9E8A510063C740 /* GoogleSignInSwift */,
 			);
 			productName = LocalDeals;
 			productReference = 84F244372F8C274000312E0A /* LocalDeals.app */;
@@ -111,6 +130,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				84D8891E2F9E8A510063C740 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 84F244382F8C274000312E0A /* Products */;
@@ -274,6 +294,7 @@
 				DEVELOPMENT_TEAM = 8WJC4YA944;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LocalDeals/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show nearby local deals";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -308,6 +329,7 @@
 				DEVELOPMENT_TEAM = 8WJC4YA944;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LocalDeals/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show nearby local deals";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -364,6 +386,14 @@
 				minimumVersion = 12.12.1;
 			};
 		};
+		84D8891E2F9E8A510063C740 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -386,6 +416,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 84AFAF772F95A64C0009AF94 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFunctionsCombine-Community";
+		};
+		84D8891F2F9E8A510063C740 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84D8891E2F9E8A510063C740 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		84D889212F9E8A510063C740 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 84D8891E2F9E8A510063C740 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

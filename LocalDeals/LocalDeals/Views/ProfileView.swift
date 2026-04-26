@@ -2,12 +2,25 @@ import SwiftUI
 
 struct ProfileView: View {
     @Environment(DealManager.self) var dealManager
+    @Environment(AuthManager.self) var authManager
 
     var savedDeals: [Deal] { dealManager.savedDeals }
 
     var body: some View {
         NavigationStack {
             List {
+                if let email = authManager.userEmail {
+                    Section("Account") {
+                        Text(email)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+
+                        Button("Sign Out", role: .destructive) {
+                            authManager.signOut()
+                        }
+                    }
+                }
+
                 Section("Saved Deals") {
                     if savedDeals.isEmpty {
                         Text("No saved deals yet.")
@@ -57,4 +70,5 @@ private struct DealRow: View {
 #Preview {
     ProfileView()
         .environment(DealManager(isMocked: true))
+        .environment(AuthManager(isMocked: true))
 }

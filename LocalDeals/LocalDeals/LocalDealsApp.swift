@@ -1,26 +1,29 @@
-//
-//  LocalDealsApp.swift
-//  LocalDeals
-//
-//  Created by Kevin Crapo on 4/12/26.
-//
-
 import SwiftUI
 import FirebaseCore
 
 @main
 struct LocalDealsApp: App {
     @State private var dealManager: DealManager
+    @State private var authManager: AuthManager
 
     init() {
         FirebaseApp.configure()
+        authManager = AuthManager()
         dealManager = DealManager()
     }
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .environment(dealManager)
+            if authManager.user != nil {
+                MainTabView()
+                    .environment(dealManager)
+                    .environment(authManager)
+            } else {
+                NavigationStack {
+                    LoginView()
+                }
+                .environment(authManager)
+            }
         }
     }
 }

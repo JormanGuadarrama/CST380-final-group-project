@@ -1,16 +1,12 @@
-//
-//  LoginView.swift
-//  LocalDeals
-//
-//  Basic email/password fields and submit button (placeholder).
-//
-
 import SwiftUI
+import GoogleSignInSwift
 
 struct LoginView: View {
-    @State private var email: String = ""
-    @State private var password: String = ""
-    @State private var isRegisterMode: Bool = false
+    @Environment(AuthManager.self) var authManager
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isRegisterMode = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -23,7 +19,7 @@ struct LoginView: View {
                 TextField("Email", text: $email)
                     .textContentType(.emailAddress)
                     .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
+                    .textInputAutocapitalization(.never)
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .cornerRadius(10)
@@ -36,25 +32,51 @@ struct LoginView: View {
             }
             .padding(.horizontal)
 
-            Button(action: {
-                // TODO: hook into Firebase Auth (#16, #19)
-            }) {
+            Button {
+                Task {
+                    if isRegisterMode {
+                        await authManager.signUp(email: email, password: password)
+                    } else {
+                        await authManager.signIn(email: email, password: password)
+                    }
+                }
+            } label: {
                 Text(isRegisterMode ? "Register" : "Sign In")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.accentColor)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(10)
             }
             .padding(.horizontal)
             .disabled(email.isEmpty || password.isEmpty)
 
-            Button(action: { isRegisterMode.toggle() }) {
-                Text(isRegisterMode
-                     ? "Already have an account? Sign In"
-                     : "New here? Create an account")
+            GoogleSignInButton {
+                Task {
+                    await authManager.signInWithGoogle()
+                }
+            }
+            .frame(height: 50)
+            .padding(.horizontal)
+
+            Button {
+                isRegisterMode.toggle()
+            } label: {
+                Text(
+                    isRegisterMode
+                    ? "Already have an account? Sign In"
+                    : "New here? Create an account"
+                )
+                .font(.footnote)
+            }
+
+            if let error = authManager.authErrorMessage {
+                Text(error)
                     .font(.footnote)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
 
             Spacer()
@@ -65,5 +87,8 @@ struct LoginView: View {
 }
 
 #Preview {
-    NavigationStack { LoginView() }
+    NavigationStack {
+        LoginView()
+            .environment(AuthManager(isMocked: true))
+    }
 }
