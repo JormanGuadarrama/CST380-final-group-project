@@ -57,14 +57,32 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 ![App Demo](images/Sequence.gif)
 
 ## Current Progress
+## Current Progress
 
-- Firestore backend fully integrated
-- Deals are fetched and displayed on map in real time
-- Users can submit new deals through the app
-- Deal detail view displays formatted expiration and discount info
-- Mock data replaced with live backend data
-- Mapkit Foundation Implemented
-- Skeletal framework of views added/partially implemented
+- (#38) Implemented map picker for selecting deal location in AddDealView  
+- (#36) Loaded saved and submitted deals in ProfileView from Firestore  
+- (#35) Implemented Firebase Authentication (email/password + Google OAuth)  
+- (#34) Wired up Save Deal button in DealDetailView  
+- (#33) Loaded deals from Firestore instead of hardcoded sample data  
+- (#32) Fixed save deals functionality using userDeals collection  
+- (#31) Implemented CoreLocation as default camera centering view  
+- (#30) Fixed cancel button behavior in AddDealView  
+- (#29) Fixed dead-end screen when submitting a deal  
+- (#28) Completed login/authentication setup and user session handling  
+- (#26) Allowed user to pick a location on the map when creating a deal  
+- (#25) Displayed user location on map when app launches  
+- (#20) Scaffolded core app views (Map, Add Deal, Profile)  
+- (#19) Integrated Firebase Authentication system  
+- (#18) Integrated MapKit for map display  
+- (#17) Implemented Firestore database schema  
+- (#16) Completed Firebase project setup  
+- (#15) Implemented tab navigation and screen flow  
+- (#12) Implemented save/bookmark deals feature  
+- (#7) Integrated Maps API setup  
+- (#6) Implemented backend deal data model (Firestore)  
+- (#5) Built Add Deal screen with submission flow  
+- (#4) Built Deal Detail screen  
+- (#3) Implemented Map screen with deal pins  
  
 ## 2. Screen Archetypes
  
@@ -194,55 +212,106 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 
 > ⚠️ Note: The following schema is preliminary and subject to change as the app design evolves. It represents our current brainstorming and may be refined during implementation.
 
-### Models
 
-**Deal**
-| Property     | Type    | Description                                      |
-|--------------|---------|--------------------------------------------------|
-| id           | String  | unique identifier for the deal                   |
-| title        | String  | name of the deal or business                     |
-| description  | String  | details about the deal                           |
-| latitude     | Double  | location latitude                                |
-| longitude    | Double  | location longitude                               |
-| discountType | String  | type of discount (e.g., %, BOGO)                 |
-| expiration   | Date    | expiration date of the deal                      |
-| imageUrl     | String  | optional image of the deal                       |
-| votes        | Int     | upvote/downvote score                            |
+### Deal (Firestore: `deals` collection)
 
-**User (Optional)**
-| Property | Type   | Description                          |
-|----------|--------|--------------------------------------|
-| id       | String | unique user id                       |
-| username | String | user's display name                  |
-| email    | String | user's email                         |
+| Property        | Type      | Description |
+|----------------|----------|------------|
+| id             | String   | document ID |
+| title          | String   | deal title |
+| businessName   | String   | business name |
+| description    | String   | deal description |
+| discountType   | String   | type of discount |
+| expiration     | Date     | expiration date |
+| imageUrl       | String   | optional image |
+| location       | GeoPoint | latitude + longitude |
+| votes          | Int      | vote count |
+| createdByUid   | String   | user ID |
+| createdByEmail | String   | creator email |
+| createdAt      | Date     | creation timestamp |
 
-**SavedDeal (Optional)**
-| Property | Type   | Description                          |
-|----------|--------|--------------------------------------|
-| userId   | String | reference to user                    |
-| dealId   | String | reference to saved deal              |
+---
+
+### User (Firestore: `users` collection)
+
+| Property     | Type    | Description |
+|--------------|--------|------------|
+| id           | String | Firebase UID |
+| email        | String | user email |
+| username     | String | username |
+| displayName  | String | display name |
+| photoURL     | String | profile image |
+| provider     | String | auth provider |
+| createdAt    | Date   | account creation |
+| lastLoginAt  | Date   | last login |
+
+---
+
+### UserDeal (Firestore: `userDeals` collection)
+
+| Property      | Type    | Description |
+|---------------|--------|------------|
+| id            | String | document ID |
+| userId        | String | reference to user |
+| dealId        | String | reference to deal |
+| relationType  | String | "saved" or "created" |
+| createdAt     | Date   | timestamp |
+
+---
+
+### App Metadata (Firestore: `appMetadata` collection)
+
+| Property   | Type    | Description |
+|------------|--------|------------|
+| seeded     | Bool   | whether mock data inserted |
+| seedName   | String | seed identifier |
+| dealIDs    | Array  | seeded deal IDs |
+| createdAt  | Date   | timestamp |
+
+---
 
 ### Networking
 
-- **Map Screen**
-  - `[GET] /deals` - retrieve all deals for map display  
+- Firestore real-time listeners used for deals and saved data  
+- Firebase Authentication handles login and session state  
+- CoreLocation provides user location  
+- MapKit renders map and annotations  
 
-- **Deal Detail Screen**
-  - `[GET] /deals/:id` - retrieve details for a specific deal  
+---
 
-- **Add Deal Screen**
-  - `[POST] /deals` - submit a new deal  
+## Sprint 4 Plan
 
-- **Voting (Optional)**
-  - `[POST] /deals/:id/vote` - upvote/downvote a deal  
+### Goal
 
-- **Saved Deals (Optional)**
-  - `[POST] /saved` - save/bookmark a deal  
-  - `[GET] /saved` - retrieve saved deals for a user  
+Enhance usability, personalization, and real-world usefulness of the app by improving discovery features and user interaction with deals.
 
-- **Image Upload (Optional)**
-  - `[POST] /upload` - upload deal image  
+### Planned Features
 
-- **External APIs**
-  - Coupon/Deals APIs (Groupon, RetailMeNot, RapidAPI)  
-  - Maps API (Google Maps SDK or Apple MapKit)  
+- Display real distance from user to each deal using CoreLocation  
+- Allow users to tap a deal in Profile and center it on the map  
+- Add user-configurable proximity radius setting for future notifications  
+- Implement map filtering by discount type (BOGO, %, Dollar Off, etc.)  
+- Improve expired deal handling with clear UI indicators  
+
+### Stretch Goals
+
+- Integrate Gemini API to assist with generating deal descriptions or recommendations  
+- Implement push notifications for nearby deals based on user proximity settings  
+- Add image upload support for deals using Firebase Storage  
+
+### Success Criteria
+
+- Users can more easily discover relevant nearby deals  
+- Map interactions feel responsive and intuitive  
+- Profile screen becomes a useful navigation tool, not just a list  
+- App demonstrates advanced features beyond basic CRUD + map display  
+
+---
+
+## Summary
+
+The app is now a fully functional MVP with:
+- Firebase Authentication and Firestore backend  
+- Real-time data updates  
+- Map-based deal discovery  
+- User interaction through saving and submitting deals 
