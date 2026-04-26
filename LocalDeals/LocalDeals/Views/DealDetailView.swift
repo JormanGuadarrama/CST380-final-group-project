@@ -2,8 +2,6 @@
 //  DealDetailView.swift
 //  LocalDeals
 //
-//  Placeholder card layout showing store name, discount, and expiration.
-//
 
 import SwiftUI
 import CoreLocation
@@ -13,31 +11,32 @@ struct DealDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                    // Discount / title — visually prioritized
+            VStack(spacing: 0) {
+                // Hero card — discount visually prioritized
+                VStack(spacing: 8) {
                     Text(deal.title)
                         .font(.largeTitle)
                         .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
 
-                    // Store name
                     Label(deal.businessName, systemImage: "storefront")
                         .font(.title3)
                         .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(24)
+                .background(Color.accentColor.opacity(0.12))
+
+                VStack(alignment: .leading, spacing: 16) {
+                    // Quick-scan info row
+                    HStack(spacing: 10) {
+                        InfoPill(icon: "clock", text: deal.expiration)
+                        InfoPill(icon: "location", text: "— mi")
+                        InfoPill(icon: "car", text: "— min drive")
+                    }
 
                     Divider()
 
-                    // Expiration
-                    Label(deal.expiration, systemImage: "clock")
-                        .font(.subheadline)
-
-                    // Distance / ETA placeholder (TODO: wire up location services)
-                    Label("— mi away · — min drive", systemImage: "location")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
-                    Divider()
-
-                    // Description
                     Text("Details")
                         .font(.headline)
                     Text(deal.description.isEmpty ? "No additional details." : deal.description)
@@ -54,20 +53,37 @@ struct DealDetailView: View {
                             .foregroundColor(.accentColor)
                             .cornerRadius(10)
                     }
+                }
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("Deal Details")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+private struct InfoPill: View {
+    let icon: String
+    let text: String
+
+    var body: some View {
+        Label(text, systemImage: icon)
+            .font(.caption)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(.systemGray6))
+            .cornerRadius(20)
+    }
+}
+
 #Preview {
-    DealDetailView(deal: Deal(
-        title: "$5 Off Margarita Flights",
-        businessName: "The Brass Tap",
-        description: "$5 off margarita flights every Monday night.",
-        expiration: "Every Monday",
-        coordinate: CLLocationCoordinate2D(latitude: 36.664856, longitude: -121.811935)
-    ))
+    NavigationStack {
+        DealDetailView(deal: Deal(
+            title: "$5 Off Margarita Flights",
+            businessName: "The Brass Tap",
+            description: "$5 off margarita flights every Monday night.",
+            expiration: "Every Monday",
+            coordinate: CLLocationCoordinate2D(latitude: 36.664856, longitude: -121.811935)
+        ))
+    }
 }
