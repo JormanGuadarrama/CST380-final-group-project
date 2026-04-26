@@ -1,33 +1,34 @@
-//
-//  MapView.swift
-//  LocalDeals
-//
-//  Map (Home) screen — displays deals fetched from Firestore.
-//
-
 import SwiftUI
 import MapKit
-import FirebaseFirestoreInternal
+import CoreLocation
 
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
+
     @State private var locationManager = LocationManager()
 
-    @State private var position = MapCameraPosition.region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    @State private var position: MapCameraPosition = .userLocation(
+        followsHeading: false,
+        fallback: .region(
+            MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
         )
     )
 
     @State private var showAddDeal = false
     @State private var selectedDeal: Deal?
 
+    private var validDeals: [Deal] {
+        dealManager.deals.filter { $0.expiration >= Date() }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 Map(position: $position) {
-                    ForEach(dealManager.deals) { deal in
+                    ForEach(validDeals) { deal in
                         Annotation(
                             deal.businessName,
                             coordinate: CLLocationCoordinate2D(
@@ -43,51 +44,69 @@ struct MapView: View {
                                 }
                         }
                     }
+
+                    if let currentLocation = locationManager.currentLocation {
+                        Annotation(
+                            "You",
+                            coordinate: currentLocation.coordinate
+                        ) {
+                            Image(systemName: "location.circle.fill")
+                                .foregroundStyle(.blue)
+                                .font(.title2)
+                        }
+                    }
                 }
                 .ignoresSafeArea(edges: .bottom)
 
-                Button(action: { showAddDeal = true }) {
-                    Label("Add Deal", systemImage: "plus")
-                        .font(.headline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.accentColor)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
-                        .shadow(radius: 4)
+                VStack(alignment: .trailing, spacing: 12) {
+                    Button {
+                        position = .userLocation(
+                            followsHeading: false,
+                            fallback: .region(
+                                MKCoordinateRegion(
+                                    center: CLLocationCoordinate2D(latitude: 36.665389, longitude: -121.811307),
+                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                )
+                            )
+                        )
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .font(.headline)
+                            .padding(12)
+                            .background(.thinMaterial)
+                            .clipShape(Circle())
+                    }
+
+                    Button {
+                        showAddDeal = true
+                    } label: {
+                        Label("Add Deal", systemImage: "plus")
+                            .font(.headline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor)
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                            .shadow(radius: 4)
+                    }
                 }
                 .padding()
             }
             .navigationTitle("Local Deals")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                locationManager.requestPermission()
+                locationManager.startUpdating()
+            }
             .sheet(isPresented: $showAddDeal) {
                 AddDealView()
+                    .environment(locationManager)
             }
             .sheet(item: $selectedDeal) { deal in
-                DealDetailView(deal: deal)
-            }
-            .onAppear {
-                locationManager.requestLocation()
-            }
-            
-            .onChange(of: locationManager.userLocation?.latitude) { _, _ in
-                if let location = locationManager.userLocation {
-                    position = .region(
-                        MKCoordinateRegion(
-                            center: location,
-                            span: MKCoordinateSpan(
-                                latitudeDelta: 0.05,
-                                longitudeDelta: 0.05
-                            )
-                        )
-                    )
+                NavigationStack {
+                    DealDetailView(deal: deal)
                 }
             }
         }
     }
-}
-
-#Preview {
-    MapView()
-        .environment(DealManager(isMocked: true))
 }
