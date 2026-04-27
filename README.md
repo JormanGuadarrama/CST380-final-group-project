@@ -57,7 +57,6 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 ![App Demo](images/Sequence.gif)
 
 ## Current Progress
-## Current Progress
 
 - (#38) Implemented map picker for selecting deal location in AddDealView  
 - (#36) Loaded saved and submitted deals in ProfileView from Firestore  
@@ -279,7 +278,7 @@ Difficulty is rated using **Fibonacci Story Points**, the industry-standard Agil
 
 ---
 
-## Sprint 4 Plan
+## Sprint 3 Plan
 
 ### Goal
 
