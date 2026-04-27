@@ -315,3 +315,93 @@ The app is now a fully functional MVP with:
 - Real-time data updates  
 - Map-based deal discovery  
 - User interaction through saving and submitting deals 
+
+---
+
+## Code Highlights
+
+### Save / Unsave a Deal (DealManager)
+Saved deal IDs are tracked in a `Set<String>` synced with Firestore via the `userDeals` collection. Toggling a save writes or deletes the relationship document in real time.
+
+```swift
+func toggleSave(deal: Deal, userID: String) async {
+    let query = try await database.collection("userDeals")
+        .whereField("userId", isEqualTo: userID)
+        .whereField("dealId", isEqualTo: deal.id)
+        .whereField("relationType", isEqualTo: "saved")
+        .getDocuments()
+
+    if let existing = query.documents.first {
+        try await database.collection("userDeals")
+            .document(existing.documentID).delete()
+    } else {
+        try await database.collection("userDeals").addDocument(data: [
+            "userId": userID,
+            "dealId": deal.id,
+            "relationType": "saved",
+            "createdAt": Timestamp(date: Date())
+        ])
+    }
+}
+```
+
+### Deal Detail Card (DealDetailView)
+Hero section puts the discount title front and center with an accent background. Info pills surface the key facts at a glance.
+
+```swift
+// Hero card
+VStack(spacing: 8) {
+    Text(deal.title)
+        .font(.largeTitle).fontWeight(.bold)
+        .multilineTextAlignment(.center)
+    Label(deal.businessName, systemImage: "storefront")
+        .font(.title3).foregroundColor(.secondary)
+}
+.frame(maxWidth: .infinity)
+.padding(24)
+.background(Color.accentColor.opacity(0.12))
+
+// Info pills
+HStack(spacing: 10) {
+    InfoPill(icon: "tag",      text: deal.discountType)
+    InfoPill(icon: "clock",    text: formattedExpiration)
+    InfoPill(icon: "location", text: "— mi")
+}
+```
+
+### Form Reset on Submit / Cancel (AddDealView)
+`resetForm()` clears all fields after submission and on cancel. `dismiss()` fires when the view is a sheet; it's a no-op when embedded as a tab — `resetForm()` handles that case.
+
+```swift
+private func resetForm() {
+    title = ""
+    businessName = ""
+    description = ""
+    latitudeText = ""
+    longitudeText = ""
+    expiration = Date()
+    discountType = "Percent Off"
+    imageUrl = ""
+    selectedCoordinate = nil
+}
+```
+
+### Real-time Saved Deals Listener (DealManager)
+On auth change, the listener attaches to the current user's `userDeals` documents and keeps `savedDealIDs` in sync so the bookmark state reflects immediately across all views.
+
+```swift
+func handleAuthChange(userID: String?) {
+    userDealsListener?.remove()
+    savedDealIDs = []
+    guard let userID else { return }
+
+    userDealsListener = database.collection("userDeals")
+        .whereField("userId", isEqualTo: userID)
+        .whereField("relationType", isEqualTo: "saved")
+        .addSnapshotListener { [weak self] snapshot, _ in
+            let ids = snapshot?.documents
+                .compactMap { $0.data()["dealId"] as? String } ?? []
+            self?.savedDealIDs = Set(ids)
+        }
+}
+```
