@@ -319,6 +319,8 @@ The app is now a fully functional MVP with:
 
 ## Code Highlights
 
+![Code Highlights](images/Sequence02.gif)
+
 ### Save / Unsave a Deal (DealManager)
 Saved deal IDs are tracked in a `Set<String>` synced with Firestore via the `userDeals` collection. Toggling a save writes or deletes the relationship document in real time.
 
