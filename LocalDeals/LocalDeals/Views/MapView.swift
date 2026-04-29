@@ -55,10 +55,12 @@ struct MapView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .overlay {
                     if dealManager.isInitialDealsLoadInProgress {
-                        InitialLoadOverlay(
-                            title: "Loading deals...",
-                            systemImage: "mappin.and.ellipse"
-                        )
+                        ProgressView("Loading deals...")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(radius: 8)
                     }
                 }
                 .onChange(of: locationManager.currentLocation) { _, newLocation in
@@ -122,26 +124,5 @@ struct MapView: View {
                 }
             }
         }
-    }
-}
-
-private struct InitialLoadOverlay: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.title2)
-                .foregroundStyle(.secondary)
-
-            ProgressView(title)
-                .font(.headline)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 8)
     }
 }

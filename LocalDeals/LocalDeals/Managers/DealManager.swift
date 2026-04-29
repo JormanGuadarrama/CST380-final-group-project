@@ -83,18 +83,21 @@ final class DealManager {
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self else { return }
 
-                defer {
-                    self.isLoadingSavedDeals = false
-                    self.hasLoadedSavedDeals = true
-                }
-
-                if let error {
-                    print("Error fetching userDeals: \(error.localizedDescription)")
+                guard let snapshot else {
+                    if let error {
+                        print("Error fetching userDeals: \(error.localizedDescription)")
+                    }
                     return
                 }
 
-                let ids = snapshot?.documents.compactMap { $0.data()["dealId"] as? String } ?? []
+                let ids = snapshot.documents.compactMap { $0.data()["dealId"] as? String }
                 self.savedDealIDs = Set(ids)
+                self.isLoadingSavedDeals = false
+                self.hasLoadedSavedDeals = true
+
+                if let error {
+                    print("Error fetching userDeals: \(error.localizedDescription)")
+                }
             }
     }
 
@@ -161,17 +164,14 @@ final class DealManager {
             .addSnapshotListener { [weak self] querySnapshot, error in
                 guard let self else { return }
 
-                defer {
-                    self.isLoadingDeals = false
-                    self.hasLoadedDeals = true
-                }
-
-                guard let documents = querySnapshot?.documents else {
-                    print("Error fetching deals: \(String(describing: error))")
-                    self.deals = []
+                guard let querySnapshot else {
+                    if let error {
+                        print("Error fetching deals: \(error.localizedDescription)")
+                    }
                     return
                 }
 
+                let documents = querySnapshot.documents
                 let fetchedDeals: [Deal] = documents.compactMap { document in
                     let data = document.data()
 
@@ -210,6 +210,12 @@ final class DealManager {
                 }
 
                 self.deals = fetchedDeals
+                self.isLoadingDeals = false
+                self.hasLoadedDeals = true
+
+                if let error {
+                    print("Error fetching deals: \(error.localizedDescription)")
+                }
             }
     }
 

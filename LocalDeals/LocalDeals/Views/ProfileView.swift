@@ -10,61 +10,60 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Account") {
-                    if let user = authManager.user {
-                        Text(user.email)
-                            .font(.subheadline)
-
-                        Text("Username: \(user.username)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Text("Provider: \(user.provider)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else if let email = authManager.userEmail {
-                        Text(email)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Button("Sign Out", role: .destructive) {
-                        authManager.signOut()
-                    }
-                }
-
+            Group {
                 if isInitialLoadInProgress {
-                    Section("Deals") {
-                        HStack(spacing: 12) {
-                            ProgressView()
-                            Text("Loading your deals...")
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading your deals...")
+                            .foregroundStyle(.secondary)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    Section("Saved Deals") {
-                        if dealManager.savedDeals.isEmpty {
-                            Text("No saved deals yet.")
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(dealManager.savedDeals) { deal in
-                                DealRow(deal: deal)
+                    List {
+                        Section("Account") {
+                            if let user = authManager.user {
+                                Text(user.email)
+                                    .font(.subheadline)
+
+                                Text("Username: \(user.username)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                Text("Provider: \(user.provider)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else if let email = authManager.userEmail {
+                                Text(email)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Button("Sign Out", role: .destructive) {
+                                authManager.signOut()
                             }
                         }
-                    }
 
-                    Section("Submitted Deals") {
-                        let submitted = dealManager.submittedDeals(for: authManager.userID)
+                        Section("Saved Deals") {
+                            if dealManager.savedDeals.isEmpty {
+                                Text("No saved deals yet.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(dealManager.savedDeals) { deal in
+                                    DealRow(deal: deal)
+                                }
+                            }
+                        }
 
-                        if submitted.isEmpty {
-                            Text("No submitted deals yet.")
-                                .foregroundColor(.secondary)
-                        } else {
-                            ForEach(submitted) { deal in
-                                DealRow(deal: deal)
+                        Section("Submitted Deals") {
+                            let submitted = dealManager.submittedDeals(for: authManager.userID)
+
+                            if submitted.isEmpty {
+                                Text("No submitted deals yet.")
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(submitted) { deal in
+                                    DealRow(deal: deal)
+                                }
                             }
                         }
                     }
