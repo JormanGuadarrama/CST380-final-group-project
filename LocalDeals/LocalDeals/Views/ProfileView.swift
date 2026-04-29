@@ -4,6 +4,10 @@ struct ProfileView: View {
     @Environment(DealManager.self) var dealManager
     @Environment(AuthManager.self) var authManager
 
+    private var isInitialLoadInProgress: Bool {
+        dealManager.isInitialProfileLoadInProgress(for: authManager.userID)
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -30,26 +34,38 @@ struct ProfileView: View {
                     }
                 }
 
-                Section("Saved Deals") {
-                    if dealManager.savedDeals.isEmpty {
-                        Text("No saved deals yet.")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(dealManager.savedDeals) { deal in
-                            DealRow(deal: deal)
+                if isInitialLoadInProgress {
+                    Section("Deals") {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text("Loading your deals...")
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                    }
+                } else {
+                    Section("Saved Deals") {
+                        if dealManager.savedDeals.isEmpty {
+                            Text("No saved deals yet.")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(dealManager.savedDeals) { deal in
+                                DealRow(deal: deal)
+                            }
                         }
                     }
-                }
 
-                Section("Submitted Deals") {
-                    let submitted = dealManager.submittedDeals(for: authManager.userID)
+                    Section("Submitted Deals") {
+                        let submitted = dealManager.submittedDeals(for: authManager.userID)
 
-                    if submitted.isEmpty {
-                        Text("No submitted deals yet.")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(submitted) { deal in
-                            DealRow(deal: deal)
+                        if submitted.isEmpty {
+                            Text("No submitted deals yet.")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(submitted) { deal in
+                                DealRow(deal: deal)
+                            }
                         }
                     }
                 }
@@ -83,4 +99,3 @@ private struct DealRow: View {
         .environment(DealManager(isMocked: true))
         .environment(AuthManager(isMocked: true))
 }
-
