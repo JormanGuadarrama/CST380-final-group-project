@@ -65,12 +65,6 @@ final class AuthManager {
         }
     }
 
-    deinit {
-        if let handle {
-            Auth.auth().removeStateDidChangeListener(handle)
-        }
-    }
-
     func signUp(email: String, password: String, username: String) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -356,7 +350,7 @@ final class AuthManager {
         let nsError = error as NSError
 
         if nsError.domain == AuthErrorDomain,
-           let code = AuthErrorCode.Code(rawValue: nsError.code) {
+           let code = AuthErrorCode(_bridgedNSError: nsError){
             switch code {
             case .emailAlreadyInUse:
                 return "That email is already registered. Try signing in instead."
