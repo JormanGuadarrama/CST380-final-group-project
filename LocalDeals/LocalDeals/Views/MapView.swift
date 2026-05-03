@@ -53,6 +53,16 @@ struct MapView: View {
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
+                .overlay {
+                    if dealManager.isInitialDealsLoadInProgress {
+                        ProgressView("Loading deals...")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(radius: 8)
+                    }
+                }
                 .onChange(of: locationManager.currentLocation) { _, newLocation in
                     guard let newLocation, !hasCenteredOnUser else { return }
 

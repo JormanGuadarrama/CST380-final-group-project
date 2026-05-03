@@ -15,6 +15,10 @@ import Observation
 final class DealManager {
     var deals: [Deal] = []
     private(set) var savedDealIDs: Set<String> = []
+    private(set) var isLoadingDeals = true
+    private(set) var hasLoadedDeals = false
+    private(set) var isLoadingSavedDeals = false
+    private(set) var hasLoadedSavedDeals = false
 
     private let database = Firestore.firestore()
     private var dealsListener: ListenerRegistration?
@@ -26,6 +30,10 @@ final class DealManager {
             if let first = Deal.mockedDeals.first {
                 savedDealIDs = [first.id]
             }
+            isLoadingDeals = false
+            hasLoadedDeals = true
+            isLoadingSavedDeals = false
+            hasLoadedSavedDeals = true
         } else {
             listenForDeals()
         }
@@ -33,6 +41,18 @@ final class DealManager {
 
     var savedDeals: [Deal] {
         deals.filter { savedDealIDs.contains($0.id) }
+    }
+
+    var isInitialDealsLoadInProgress: Bool {
+        isLoadingDeals && !hasLoadedDeals
+    }
+
+    func isInitialProfileLoadInProgress(for userID: String?) -> Bool {
+        if userID == nil {
+            return isInitialDealsLoadInProgress
+        }
+
+        return (isLoadingDeals && !hasLoadedDeals) || (isLoadingSavedDeals && !hasLoadedSavedDeals)
     }
 
     func submittedDeals(for userID: String?) -> [Deal] {
@@ -48,7 +68,14 @@ final class DealManager {
         userDealsListener?.remove()
         savedDealIDs = []
 
-        guard let userID else { return }
+        guard let userID else {
+            isLoadingSavedDeals = false
+            hasLoadedSavedDeals = true
+            return
+        }
+
+        isLoadingSavedDeals = true
+        hasLoadedSavedDeals = false
 
         userDealsListener = database.collection("userDeals")
             .whereField("userId", isEqualTo: userID)
@@ -56,13 +83,21 @@ final class DealManager {
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self else { return }
 
-                if let error {
-                    print("Error fetching userDeals: \(error.localizedDescription)")
+                guard let snapshot else {
+                    if let error {
+                        print("Error fetching userDeals: \(error.localizedDescription)")
+                    }
                     return
                 }
 
-                let ids = snapshot?.documents.compactMap { $0.data()["dealId"] as? String } ?? []
+                let ids = snapshot.documents.compactMap { $0.data()["dealId"] as? String }
                 self.savedDealIDs = Set(ids)
+                self.isLoadingSavedDeals = false
+                self.hasLoadedSavedDeals = true
+
+                if let error {
+                    print("Error fetching userDeals: \(error.localizedDescription)")
+                }
             }
     }
 
@@ -121,16 +156,22 @@ final class DealManager {
     }
 
     private func listenForDeals() {
+        isLoadingDeals = true
+        hasLoadedDeals = false
+
         dealsListener = database.collection("deals")
             .order(by: "createdAt", descending: true)
             .addSnapshotListener { [weak self] querySnapshot, error in
                 guard let self else { return }
 
-                guard let documents = querySnapshot?.documents else {
-                    print("Error fetching deals: \(String(describing: error))")
+                guard let querySnapshot else {
+                    if let error {
+                        print("Error fetching deals: \(error.localizedDescription)")
+                    }
                     return
                 }
 
+                let documents = querySnapshot.documents
                 let fetchedDeals: [Deal] = documents.compactMap { document in
                     let data = document.data()
 
@@ -169,6 +210,12 @@ final class DealManager {
                 }
 
                 self.deals = fetchedDeals
+                self.isLoadingDeals = false
+                self.hasLoadedDeals = true
+
+                if let error {
+                    print("Error fetching deals: \(error.localizedDescription)")
+                }
             }
     }
 
