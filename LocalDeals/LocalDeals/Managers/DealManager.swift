@@ -26,8 +26,6 @@ final class DealManager {
             if let first = Deal.mockedDeals.first {
                 savedDealIDs = [first.id]
             }
-        } else {
-            listenForDeals()
         }
     }
 
@@ -45,10 +43,14 @@ final class DealManager {
     }
 
     func handleAuthChange(userID: String?) {
+        dealsListener?.remove()
         userDealsListener?.remove()
+        deals = []
         savedDealIDs = []
 
         guard let userID else { return }
+
+        listenForDeals()
 
         userDealsListener = database.collection("userDeals")
             .whereField("userId", isEqualTo: userID)
@@ -121,6 +123,8 @@ final class DealManager {
     }
 
     private func listenForDeals() {
+        dealsListener?.remove()
+
         dealsListener = database.collection("deals")
             .order(by: "createdAt", descending: true)
             .addSnapshotListener { [weak self] querySnapshot, error in
