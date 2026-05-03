@@ -27,15 +27,15 @@ final class DealManager {
     init(isMocked: Bool = false) {
         if isMocked {
             deals = Deal.mockedDeals
+
             if let first = Deal.mockedDeals.first {
                 savedDealIDs = [first.id]
             }
+
             isLoadingDeals = false
             hasLoadedDeals = true
             isLoadingSavedDeals = false
             hasLoadedSavedDeals = true
-        } else {
-            listenForDeals()
         }
     }
 
@@ -65,17 +65,26 @@ final class DealManager {
     }
 
     func handleAuthChange(userID: String?) {
+        dealsListener?.remove()
         userDealsListener?.remove()
+
+        deals = []
         savedDealIDs = []
 
         guard let userID else {
+            isLoadingDeals = false
+            hasLoadedDeals = true
             isLoadingSavedDeals = false
             hasLoadedSavedDeals = true
             return
         }
 
+        isLoadingDeals = true
+        hasLoadedDeals = false
         isLoadingSavedDeals = true
         hasLoadedSavedDeals = false
+
+        listenForDeals()
 
         userDealsListener = database.collection("userDeals")
             .whereField("userId", isEqualTo: userID)
@@ -87,6 +96,9 @@ final class DealManager {
                     if let error {
                         print("Error fetching userDeals: \(error.localizedDescription)")
                     }
+
+                    self.isLoadingSavedDeals = false
+                    self.hasLoadedSavedDeals = true
                     return
                 }
 
@@ -156,6 +168,8 @@ final class DealManager {
     }
 
     private func listenForDeals() {
+        dealsListener?.remove()
+
         isLoadingDeals = true
         hasLoadedDeals = false
 
@@ -168,11 +182,13 @@ final class DealManager {
                     if let error {
                         print("Error fetching deals: \(error.localizedDescription)")
                     }
+
+                    self.isLoadingDeals = false
+                    self.hasLoadedDeals = true
                     return
                 }
 
-                let documents = querySnapshot.documents
-                let fetchedDeals: [Deal] = documents.compactMap { document in
+                let fetchedDeals: [Deal] = querySnapshot.documents.compactMap { document in
                     let data = document.data()
 
                     guard

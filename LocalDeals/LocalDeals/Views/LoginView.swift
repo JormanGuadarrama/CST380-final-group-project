@@ -66,16 +66,24 @@ struct LoginView: View {
                     }
                 }
             } label: {
-                Text(isRegisterMode ? "Register" : "Sign In")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .cornerRadius(10)
+                HStack {
+                    if authManager.isAuthLoading {
+                        ProgressView()
+                            .tint(.white)
+                    }
+
+                    Text(authManager.isAuthLoading ? "Please wait..." : (isRegisterMode ? "Register" : "Sign In"))
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(authManager.isAuthLoading ? Color.gray : Color.accentColor)
+                .foregroundStyle(.white)
+                .cornerRadius(10)
             }
             .padding(.horizontal)
             .disabled(
+                authManager.isAuthLoading ||
                 email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                 password.isEmpty ||
                 (isRegisterMode && username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -88,10 +96,12 @@ struct LoginView: View {
             }
             .frame(height: 50)
             .padding(.horizontal)
+            .disabled(authManager.isAuthLoading)
 
             Button {
                 isRegisterMode.toggle()
                 authManager.authErrorMessage = nil
+                password = ""
             } label: {
                 Text(
                     isRegisterMode
@@ -100,6 +110,7 @@ struct LoginView: View {
                 )
                 .font(.footnote)
             }
+            .disabled(authManager.isAuthLoading)
 
             if let error = authManager.authErrorMessage {
                 Text(error)

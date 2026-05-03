@@ -4,7 +4,8 @@ import CoreLocation
 struct AddDealView: View {
     @Environment(DealManager.self) var dealManager
     @Environment(AuthManager.self) var authManager
-    @Environment(\.dismiss) private var dismiss
+
+    var onFinish: (() -> Void)? = nil
 
     @State private var locationManager = LocationManager()
 
@@ -13,7 +14,7 @@ struct AddDealView: View {
     @State private var description: String = ""
     @State private var latitudeText: String = ""
     @State private var longitudeText: String = ""
-    @State private var expiration: Date = Date()
+    @State private var expiration: Date = Date().addingTimeInterval(60 * 60 * 24)
     @State private var discountType: String = "Percent Off"
     @State private var imageUrl: String = ""
 
@@ -28,20 +29,27 @@ struct AddDealView: View {
         description = ""
         latitudeText = ""
         longitudeText = ""
-        expiration = Date()
+        expiration = Date().addingTimeInterval(60 * 60 * 24)
         discountType = "Percent Off"
         imageUrl = ""
         selectedCoordinate = nil
+    }
+
+    private var isFormValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !latitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !longitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Deal Info") {
-                    TextField("Title (e.g. $5 Off Margarita Flights)", text: $title)
+                    TextField("Title", text: $title)
                     TextField("Business Name", text: $businessName)
                     TextField("Description", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
                 }
 
                 Section("Location") {
@@ -52,6 +60,7 @@ struct AddDealView: View {
                         .keyboardType(.decimalPad)
 
                     Button {
+                        print("[AddDealView] Map picker opened")
                         showMapPicker = true
                     } label: {
                         Label("Pick on Map", systemImage: "map")
@@ -60,7 +69,6 @@ struct AddDealView: View {
                     if let selectedCoordinate {
                         Text("Selected: \(selectedCoordinate.latitude), \(selectedCoordinate.longitude)")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -71,36 +79,42 @@ struct AddDealView: View {
                 }
 
                 Section("Expiration") {
-                    DatePicker("Expires", selection: $expiration, displayedComponents: .date)
+                    DatePicker("Expires", selection: $expiration, in: Date()..., displayedComponents: .date)
                 }
 
                 Section("Image") {
-                    TextField("Image URL (optional)", text: $imageUrl)
+                    TextField("Image URL", text: $imageUrl)
                 }
             }
             .navigationTitle("Add Deal")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+
+                // CANCEL
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        print("[AddDealView] Cancel tapped.")
                         resetForm()
-                        dismiss()
+                        onFinish?()
                     }
                 }
 
+                // SUBMIT
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
-                        guard
-                            let latitude = Double(latitudeText),
-                            let longitude = Double(longitudeText),
-                            let createdByUid = authManager.userID,
-                            let createdByEmail = authManager.userEmail
-                        else {
-                            print("Missing coordinates or authenticated user.")
+                        print("[AddDealView] Submit tapped. Form valid: \(isFormValid)")
+
+                        guard isFormValid,
+                              let latitude = Double(latitudeText),
+                              let longitude = Double(longitudeText),
+                              let uid = authManager.userID,
+                              let email = authManager.userEmail else {
+                            print("[AddDealView] Validation failed")
                             return
                         }
 
                         Task {
+                            print("[AddDealView] Sending deal to Firestore...")
+
                             await dealManager.addDeal(
                                 title: title,
                                 businessName: businessName,
@@ -110,29 +124,22 @@ struct AddDealView: View {
                                 imageUrl: imageUrl,
                                 latitude: latitude,
                                 longitude: longitude,
-                                createdByUid: createdByUid,
-                                createdByEmail: createdByEmail
+                                createdByUid: uid,
+                                createdByEmail: email
                             )
 
+                            print("[AddDealView] Deal successfully added. Resetting form.")
+
                             resetForm()
-                            dismiss()
+                            onFinish?()
                         }
                     }
-                    .disabled(
-                        title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                        businessName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                        description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                        latitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                        longitudeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    )
+                    .disabled(!isFormValid)
                 }
-            }
-            .onAppear {
-                locationManager.requestPermission()
-                locationManager.startUpdating()
             }
             .sheet(isPresented: $showMapPicker) {
                 MapPickerView { coordinate in
+                    print("[AddDealView] Map location selected: \(coordinate)")
                     selectedCoordinate = coordinate
                     latitudeText = String(coordinate.latitude)
                     longitudeText = String(coordinate.longitude)
@@ -141,10 +148,4 @@ struct AddDealView: View {
             }
         }
     }
-}
-
-#Preview {
-    AddDealView()
-        .environment(DealManager(isMocked: true))
-        .environment(AuthManager(isMocked: true))
 }

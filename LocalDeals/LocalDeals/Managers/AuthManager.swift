@@ -15,6 +15,7 @@ final class AuthManager {
     var isSignedIn = false
     var authErrorMessage: String?
     var user: User?
+    var isAuthLoading = false
 
     let isMocked: Bool
 
@@ -64,11 +65,11 @@ final class AuthManager {
         }
     }
 
-
-
     func signUp(email: String, password: String, username: String) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        authErrorMessage = nil
 
         guard !trimmedEmail.isEmpty, !password.isEmpty, !trimmedUsername.isEmpty else {
             authErrorMessage = "Email, username, and password are required."
@@ -85,33 +86,46 @@ final class AuthManager {
             return
         }
 
-        do {
-            let taken = try await usernameExists(trimmedUsername)
-            if taken {
-                authErrorMessage = "That username is already taken."
-                return
-            }
+        isAuthLoading = true
+        defer { isAuthLoading = false }
 
+        do {
             let result = try await Auth.auth().createUser(withEmail: trimmedEmail, password: password)
             self.firebaseUser = result.user
             self.isSignedIn = true
+
+            let taken = try await usernameExists(trimmedUsername)
+            if taken {
+                try? await result.user.delete()
+                try? Auth.auth().signOut()
+                self.firebaseUser = nil
+                self.user = nil
+                self.isSignedIn = false
+                self.authErrorMessage = "That username is already taken."
+                return
+            }
 
             await syncUserDocument(for: result.user, requestedUsername: trimmedUsername)
             await fetchCurrentUser()
 
             self.authErrorMessage = nil
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
     func signIn(email: String, password: String) async {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
+        authErrorMessage = nil
+
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
             authErrorMessage = "Email and password are required."
             return
         }
+
+        isAuthLoading = true
+        defer { isAuthLoading = false }
 
         do {
             let result = try await Auth.auth().signIn(withEmail: trimmedEmail, password: password)
@@ -123,7 +137,7 @@ final class AuthManager {
 
             self.authErrorMessage = nil
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
@@ -137,6 +151,10 @@ final class AuthManager {
             authErrorMessage = "Could not find a view controller for Google Sign-In."
             return
         }
+
+        authErrorMessage = nil
+        isAuthLoading = true
+        defer { isAuthLoading = false }
 
         do {
             let config = GIDConfiguration(clientID: clientID)
@@ -179,7 +197,7 @@ final class AuthManager {
 
             self.authErrorMessage = nil
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
@@ -192,7 +210,7 @@ final class AuthManager {
             self.isSignedIn = false
             self.authErrorMessage = nil
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
@@ -231,7 +249,7 @@ final class AuthManager {
 
             try await ref.setData(data, merge: true)
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
@@ -264,7 +282,7 @@ final class AuthManager {
                 lastLoginAt: lastLoginAt
             )
         } catch {
-            self.authErrorMessage = error.localizedDescription
+            self.authErrorMessage = friendlyAuthError(error)
         }
     }
 
@@ -326,6 +344,32 @@ final class AuthManager {
     private func isValidUsername(_ username: String) -> Bool {
         let normalized = normalizedUsername(username)
         return normalized == username && (3...20).contains(username.count)
+    }
+
+    private func friendlyAuthError(_ error: Error) -> String {
+        let nsError = error as NSError
+
+        if nsError.domain == AuthErrorDomain,
+           let code = AuthErrorCode(_bridgedNSError: nsError){
+            switch code {
+            case .emailAlreadyInUse:
+                return "That email is already registered. Try signing in instead."
+            case .invalidEmail:
+                return "Please enter a valid email address."
+            case .weakPassword:
+                return "Password is too weak. Use at least 9 characters."
+            case .wrongPassword, .invalidCredential:
+                return "Incorrect email or password."
+            case .userNotFound:
+                return "No account found for that email."
+            case .networkError:
+                return "Network error. Check your connection and try again."
+            default:
+                return error.localizedDescription
+            }
+        }
+
+        return error.localizedDescription
     }
 
     private func topViewController(
