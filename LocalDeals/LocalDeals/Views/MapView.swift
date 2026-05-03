@@ -26,7 +26,10 @@ struct MapView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
+
+                // MAP
                 Map(position: $position) {
+
                     ForEach(validDeals) { deal in
                         Annotation(
                             deal.businessName,
@@ -39,6 +42,7 @@ struct MapView: View {
                                 .foregroundStyle(.red)
                                 .font(.title)
                                 .onTapGesture {
+                                    print("[MapView] Selected deal: \(deal.title)")
                                     selectedDeal = deal
                                 }
                         }
@@ -53,21 +57,13 @@ struct MapView: View {
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
-                .onChange(of: locationManager.currentLocation) { _, newLocation in
-                    guard let newLocation, !hasCenteredOnUser else { return }
 
-                    position = .region(
-                        MKCoordinateRegion(
-                            center: newLocation.coordinate,
-                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                        )
-                    )
-                    hasCenteredOnUser = true
-                }
-
+                // CENTER ON USER BUTTON
                 VStack(alignment: .trailing, spacing: 12) {
+
                     Button {
                         if let currentLocation = locationManager.currentLocation {
+                            print("[MapView] Centering on user location")
                             position = .region(
                                 MKCoordinateRegion(
                                     center: currentLocation.coordinate,
@@ -83,7 +79,9 @@ struct MapView: View {
                             .clipShape(Circle())
                     }
 
+                    // ADD DEAL BUTTON
                     Button {
+                        print("[MapView] Opening AddDealView sheet")
                         showAddDeal = true
                     } label: {
                         Label("Add Deal", systemImage: "plus")
@@ -100,14 +98,40 @@ struct MapView: View {
             }
             .navigationTitle("Local Deals")
             .navigationBarTitleDisplayMode(.inline)
+
+            // LOCATION SETUP
             .onAppear {
                 locationManager.requestPermission()
                 locationManager.startUpdating()
             }
-            .sheet(isPresented: $showAddDeal) {
-                AddDealView()
-                    .environment(locationManager)
+
+            // CENTER ON FIRST LOCATION UPDATE
+            .onChange(of: locationManager.currentLocation) { _, newLocation in
+                guard let newLocation, !hasCenteredOnUser else { return }
+
+                print("[MapView] First location received. Centering map.")
+
+                position = .region(
+                    MKCoordinateRegion(
+                        center: newLocation.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                    )
+                )
+                hasCenteredOnUser = true
             }
+
+            // ADD DEAL SHEET (FIXED)
+            .sheet(isPresented: $showAddDeal) {
+                NavigationStack {
+                    AddDealView {
+                        print("[MapView] AddDealView finished. Closing sheet.")
+                        showAddDeal = false
+                    }
+                    .environment(locationManager)
+                }
+            }
+
+            // DEAL DETAIL SHEET
             .sheet(item: $selectedDeal) { deal in
                 NavigationStack {
                     DealDetailView(deal: deal)
@@ -115,4 +139,9 @@ struct MapView: View {
             }
         }
     }
+}
+
+#Preview {
+    MapView()
+        .environment(DealManager(isMocked: true))
 }
