@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import FirebaseFirestoreInternal
 
 struct DealsView: View {
     @Environment(DealManager.self) var dealManager
@@ -113,38 +114,42 @@ private struct DealRow: View {
     let distanceText: String?
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(deal.title)
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(deal.title)
+                        .font(.headline)
 
-                Text(deal.businessName)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    Text(deal.businessName)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
 
-                Text(deal.expiration.formatted(date: .abbreviated, time: .omitted))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer(minLength: 12)
-
-            VStack(alignment: .trailing, spacing: 4) {
-                if let distanceText {
-                    Text(distanceText)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    Text(deal.expiration.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
 
-                if deal.isExpired {
-                    Text("Expired")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.9), in: Capsule())
+                Spacer(minLength: 12)
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let distanceText {
+                        Text(distanceText)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if deal.isExpired {
+                        Text("Expired")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.red.opacity(0.9), in: Capsule())
+                    }
                 }
             }
+
+            DealVoteControls(deal: deal, compact: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

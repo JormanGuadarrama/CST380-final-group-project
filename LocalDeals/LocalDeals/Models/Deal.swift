@@ -14,9 +14,41 @@ struct Deal: Hashable, Identifiable {
     let createdByUid: String?
     let createdByEmail: String?
     let createdAt: Date?
+
+    init(
+        id: String,
+        title: String,
+        businessName: String,
+        description: String,
+        discountType: String,
+        expiration: Date,
+        imageUrl: String,
+        location: GeoPoint,
+        votes: Int = 0,
+        createdByUid: String?,
+        createdByEmail: String?,
+        createdAt: Date?
+    ) {
+        self.id = id
+        self.title = title
+        self.businessName = businessName
+        self.description = description
+        self.discountType = discountType
+        self.expiration = expiration
+        self.imageUrl = imageUrl
+        self.location = location
+        self.votes = votes
+        self.createdByUid = createdByUid
+        self.createdByEmail = createdByEmail
+        self.createdAt = createdAt
+    }
 }
 
 extension Deal {
+    var isExpired: Bool {
+        expiration < Date()
+    }
+
     static let mockedDeals: [Deal] = [
         Deal(
             id: "seed_1",
