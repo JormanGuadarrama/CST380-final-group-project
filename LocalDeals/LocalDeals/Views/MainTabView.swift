@@ -1,9 +1,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @Environment(DealManager.self) var dealManager
-    @Environment(AuthManager.self) var authManager
-
     @State private var selectedTab: Int = 0
 
     var body: some View {
@@ -24,11 +21,17 @@ struct MainTabView: View {
             }
             .tag(1)
 
+            DealsView()
+                .tabItem {
+                    Label("Deals", systemImage: "tag")
+                }
+                .tag(2)
+
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }
-                .tag(2)
+                .tag(3)
         }
     }
 }

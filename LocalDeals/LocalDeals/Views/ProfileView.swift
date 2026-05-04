@@ -1,72 +1,44 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @Environment(DealManager.self) var dealManager
     @Environment(AuthManager.self) var authManager
 
-    private var isInitialLoadInProgress: Bool {
-        dealManager.isInitialProfileLoadInProgress(for: authManager.userID)
-    }
+    @AppStorage("nearbyDealRadiusMiles") private var nearbyDealRadiusMiles = 5
 
     var body: some View {
         NavigationStack {
-            Group {
-                if isInitialLoadInProgress {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text("Loading your deals...")
+            List {
+                Section("Account") {
+                    if let user = authManager.user {
+                        Text(user.email)
+                            .font(.subheadline)
+
+                        Text("Username: \(user.username)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("Provider: \(user.provider)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if let email = authManager.userEmail {
+                        Text(email)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        Section("Account") {
-                            if let user = authManager.user {
-                                Text(user.email)
-                                    .font(.subheadline)
 
-                                Text("Username: \(user.username)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-
-                                Text("Provider: \(user.provider)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else if let email = authManager.userEmail {
-                                Text(email)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Button("Sign Out", role: .destructive) {
-                                authManager.signOut()
-                            }
-                        }
-
-                        Section("Saved Deals") {
-                            if dealManager.savedDeals.isEmpty {
-                                Text("No saved deals yet.")
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                ForEach(dealManager.savedDeals) { deal in
-                                    DealRow(deal: deal)
-                                }
-                            }
-                        }
-
-                        Section("Submitted Deals") {
-                            let submitted = dealManager.submittedDeals(for: authManager.userID)
-
-                            if submitted.isEmpty {
-                                Text("No submitted deals yet.")
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                ForEach(submitted) { deal in
-                                    DealRow(deal: deal)
-                                }
-                            }
-                        }
+                    Button("Sign Out", role: .destructive) {
+                        authManager.signOut()
                     }
+                }
+
+                Section("Nearby Settings") {
+                    Stepper(value: $nearbyDealRadiusMiles, in: 1...25, step: 1) {
+                        Text("Nearby radius: \(nearbyDealRadiusMiles) miles")
+                    }
+
+                    Text("Nearby deals use this radius in 1-mile increments.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Profile")
@@ -74,27 +46,7 @@ struct ProfileView: View {
     }
 }
 
-private struct DealRow: View {
-    let deal: Deal
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(deal.title)
-                .font(.headline)
-
-            Text(deal.businessName)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Text(deal.expiration.formatted(date: .abbreviated, time: .omitted))
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-
 #Preview {
     ProfileView()
-        .environment(DealManager(isMocked: true))
         .environment(AuthManager(isMocked: true))
 }

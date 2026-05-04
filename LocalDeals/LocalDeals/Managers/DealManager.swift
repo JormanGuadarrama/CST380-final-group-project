@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 import FirebaseAuth
 import FirebaseFirestore
 import Observation
@@ -15,14 +16,17 @@ import Observation
 final class DealManager {
     var deals: [Deal] = []
     private(set) var savedDealIDs: Set<String> = []
+    private(set) var currentUserVoteByDealID: [String: Int] = [:]
     private(set) var isLoadingDeals = true
     private(set) var hasLoadedDeals = false
     private(set) var isLoadingSavedDeals = false
     private(set) var hasLoadedSavedDeals = false
+    private(set) var archivedDealIDs: Set<String> = []
 
     private let database = Firestore.firestore()
     private var dealsListener: ListenerRegistration?
     private var userDealsListener: ListenerRegistration?
+    private var dealVotesListener: ListenerRegistration?
 
     init(isMocked: Bool = false) {
         if isMocked {
@@ -36,11 +40,13 @@ final class DealManager {
             hasLoadedDeals = true
             isLoadingSavedDeals = false
             hasLoadedSavedDeals = true
+            archivedDealIDs = []
+            currentUserVoteByDealID = [:]
         }
     }
 
     var savedDeals: [Deal] {
-        deals.filter { savedDealIDs.contains($0.id) }
+        deals.filter { savedDealIDs.contains($0.id) && !archivedDealIDs.contains($0.id) }
     }
 
     var isInitialDealsLoadInProgress: Bool {
@@ -57,19 +63,58 @@ final class DealManager {
 
     func submittedDeals(for userID: String?) -> [Deal] {
         guard let userID else { return [] }
-        return deals.filter { $0.createdByUid == userID }
+        return deals.filter { $0.createdByUid == userID && !archivedDealIDs.contains($0.id) }
+    }
+
+    func nearbyDeals(
+        around currentLocation: CLLocation?,
+        radiusMiles: Double,
+        excluding excludedDealIDs: Set<String> = []
+    ) -> [Deal] {
+        guard let currentLocation else { return [] }
+
+        let radiusMeters = radiusMiles * 1609.34
+
+        return deals
+            .filter { !$0.isExpired }
+            .filter { !excludedDealIDs.contains($0.id) }
+            .filter { deal in
+                let dealLocation = CLLocation(
+                    latitude: deal.location.latitude,
+                    longitude: deal.location.longitude
+                )
+
+                return currentLocation.distance(from: dealLocation) <= radiusMeters
+            }
+            .sorted {
+                let firstDistance = currentLocation.distance(
+                    from: CLLocation(latitude: $0.location.latitude, longitude: $0.location.longitude)
+                )
+                let secondDistance = currentLocation.distance(
+                    from: CLLocation(latitude: $1.location.latitude, longitude: $1.location.longitude)
+                )
+
+                return firstDistance < secondDistance
+            }
     }
 
     func isSaved(_ deal: Deal) -> Bool {
         savedDealIDs.contains(deal.id)
     }
 
+    func currentUserVote(for dealID: String) -> Int? {
+        currentUserVoteByDealID[dealID]
+    }
+
     func handleAuthChange(userID: String?) {
         dealsListener?.remove()
         userDealsListener?.remove()
+        dealVotesListener?.remove()
 
         deals = []
         savedDealIDs = []
+        archivedDealIDs = []
+        currentUserVoteByDealID = [:]
 
         guard let userID else {
             isLoadingDeals = false
@@ -85,10 +130,10 @@ final class DealManager {
         hasLoadedSavedDeals = false
 
         listenForDeals()
+        listenForCurrentUserVotes(userID: userID)
 
         userDealsListener = database.collection("userDeals")
             .whereField("userId", isEqualTo: userID)
-            .whereField("relationType", isEqualTo: "saved")
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self else { return }
 
@@ -102,8 +147,31 @@ final class DealManager {
                     return
                 }
 
-                let ids = snapshot.documents.compactMap { $0.data()["dealId"] as? String }
-                self.savedDealIDs = Set(ids)
+                var savedIDs: Set<String> = []
+                var archivedIDs: Set<String> = []
+
+                for document in snapshot.documents {
+                    let data = document.data()
+
+                    guard
+                        let dealId = data["dealId"] as? String,
+                        let relationType = data["relationType"] as? String
+                    else {
+                        continue
+                    }
+
+                    switch relationType {
+                    case "saved":
+                        savedIDs.insert(dealId)
+                    case "archived":
+                        archivedIDs.insert(dealId)
+                    default:
+                        break
+                    }
+                }
+
+                self.savedDealIDs = savedIDs
+                self.archivedDealIDs = archivedIDs
                 self.isLoadingSavedDeals = false
                 self.hasLoadedSavedDeals = true
 
@@ -111,6 +179,61 @@ final class DealManager {
                     print("Error fetching userDeals: \(error.localizedDescription)")
                 }
             }
+    }
+
+    func vote(on deal: Deal, desiredValue: Int, userID: String) async {
+        guard desiredValue == 1 || desiredValue == -1 else { return }
+
+        let voteID = "\(deal.id)_\(userID)"
+        let voteRef = database.collection("dealVotes").document(voteID)
+        let dealRef = database.collection("deals").document(deal.id)
+
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                database.runTransaction({ transaction, errorPointer -> Any? in
+                    do {
+                        let voteSnapshot = try transaction.getDocument(voteRef)
+                        let dealSnapshot = try transaction.getDocument(dealRef)
+                        let existingValue = voteSnapshot.data()?["value"] as? Int
+                        let currentVotes = dealSnapshot.data()?["votes"] as? Int ?? 0
+                        let delta: Int
+
+                        if let existingValue {
+                            delta = desiredValue == existingValue ? -existingValue : desiredValue - existingValue
+                        } else {
+                            delta = desiredValue
+                        }
+
+                        let updatedVotes = currentVotes + delta
+                        transaction.updateData(["votes": updatedVotes], forDocument: dealRef)
+
+                        if existingValue == desiredValue {
+                            transaction.deleteDocument(voteRef)
+                        } else {
+                            transaction.setData([
+                                "dealId": deal.id,
+                                "userId": userID,
+                                "value": desiredValue,
+                                "updatedAt": FieldValue.serverTimestamp()
+                            ], forDocument: voteRef)
+                        }
+
+                        return nil
+                    } catch {
+                        errorPointer?.pointee = error as NSError
+                        return nil
+                    }
+                }, completion: { _, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                })
+            }
+        } catch {
+            print("Error voting on deal: \(error.localizedDescription)")
+        }
     }
 
     func seedMockDealsIfNeeded() async {
@@ -188,7 +311,9 @@ final class DealManager {
                     return
                 }
 
-                let fetchedDeals: [Deal] = querySnapshot.documents.compactMap { document in
+                var fetchedDeals: [Deal] = []
+
+                for document in querySnapshot.documents {
                     let data = document.data()
 
                     guard
@@ -203,25 +328,27 @@ final class DealManager {
                         let createdByEmail = data["createdByEmail"] as? String
                     else {
                         print("Skipping invalid deal doc: \(document.documentID)")
-                        return nil
+                        continue
                     }
 
                     let votes = data["votes"] as? Int ?? 0
                     let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
 
-                    return Deal(
-                        id: document.documentID,
-                        title: title,
-                        businessName: businessName,
-                        description: description,
-                        discountType: discountType,
-                        expiration: expirationTimestamp.dateValue(),
-                        imageUrl: imageUrl,
-                        location: location,
-                        votes: votes,
-                        createdByUid: createdByUid,
-                        createdByEmail: createdByEmail,
-                        createdAt: createdAt
+                    fetchedDeals.append(
+                        Deal(
+                            id: document.documentID,
+                            title: title,
+                            businessName: businessName,
+                            description: description,
+                            discountType: discountType,
+                            expiration: expirationTimestamp.dateValue(),
+                            imageUrl: imageUrl,
+                            location: location,
+                            votes: votes,
+                            createdByUid: createdByUid,
+                            createdByEmail: createdByEmail,
+                            createdAt: createdAt
+                        )
                     )
                 }
 
@@ -231,6 +358,47 @@ final class DealManager {
 
                 if let error {
                     print("Error fetching deals: \(error.localizedDescription)")
+                }
+            }
+    }
+
+    private func listenForCurrentUserVotes(userID: String) {
+        dealVotesListener?.remove()
+
+        dealVotesListener = database.collection("dealVotes")
+            .whereField("userId", isEqualTo: userID)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self else { return }
+
+                guard let snapshot else {
+                    if let error {
+                        print("Error fetching dealVotes: \(error.localizedDescription)")
+                    }
+
+                    self.currentUserVoteByDealID = [:]
+                    return
+                }
+
+                var votesByDealID: [String: Int] = [:]
+
+                for document in snapshot.documents {
+                    let data = document.data()
+
+                    guard
+                        let dealID = data["dealId"] as? String,
+                        let value = data["value"] as? Int,
+                        value == 1 || value == -1
+                    else {
+                        continue
+                    }
+
+                    votesByDealID[dealID] = value
+                }
+
+                self.currentUserVoteByDealID = votesByDealID
+
+                if let error {
+                    print("Error fetching dealVotes: \(error.localizedDescription)")
                 }
             }
     }
@@ -302,6 +470,33 @@ final class DealManager {
             }
         } catch {
             print("Error toggling save: \(error.localizedDescription)")
+        }
+    }
+
+    func archiveExpiredDeals(for userID: String?) async {
+        guard let userID else { return }
+
+        let expiredDeals = Array(Set((savedDeals + submittedDeals(for: userID)).filter { $0.isExpired }))
+            .sorted { $0.expiration < $1.expiration }
+
+        guard !expiredDeals.isEmpty else { return }
+
+        do {
+            let batch = database.batch()
+
+            for deal in expiredDeals where !archivedDealIDs.contains(deal.id) {
+                let relationRef = database.collection("userDeals").document()
+                batch.setData([
+                    "userId": userID,
+                    "dealId": deal.id,
+                    "relationType": "archived",
+                    "createdAt": Timestamp(date: Date())
+                ], forDocument: relationRef)
+            }
+
+            try await batch.commit()
+        } catch {
+            print("Error archiving expired deals: \(error.localizedDescription)")
         }
     }
 }
