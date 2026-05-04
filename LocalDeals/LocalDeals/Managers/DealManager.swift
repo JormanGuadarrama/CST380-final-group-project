@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 import FirebaseAuth
 import FirebaseFirestore
 import Observation
@@ -19,6 +20,7 @@ final class DealManager {
     private(set) var hasLoadedDeals = false
     private(set) var isLoadingSavedDeals = false
     private(set) var hasLoadedSavedDeals = false
+    private(set) var archivedDealIDs: Set<String> = []
 
     private let database = Firestore.firestore()
     private var dealsListener: ListenerRegistration?
@@ -36,11 +38,12 @@ final class DealManager {
             hasLoadedDeals = true
             isLoadingSavedDeals = false
             hasLoadedSavedDeals = true
+            archivedDealIDs = []
         }
     }
 
     var savedDeals: [Deal] {
-        deals.filter { savedDealIDs.contains($0.id) }
+        deals.filter { savedDealIDs.contains($0.id) && !archivedDealIDs.contains($0.id) }
     }
 
     var isInitialDealsLoadInProgress: Bool {
@@ -57,7 +60,39 @@ final class DealManager {
 
     func submittedDeals(for userID: String?) -> [Deal] {
         guard let userID else { return [] }
-        return deals.filter { $0.createdByUid == userID }
+        return deals.filter { $0.createdByUid == userID && !archivedDealIDs.contains($0.id) }
+    }
+
+    func nearbyDeals(
+        around currentLocation: CLLocation?,
+        radiusMiles: Double,
+        excluding excludedDealIDs: Set<String> = []
+    ) -> [Deal] {
+        guard let currentLocation else { return [] }
+
+        let radiusMeters = radiusMiles * 1609.34
+
+        return deals
+            .filter { !$0.isExpired }
+            .filter { !excludedDealIDs.contains($0.id) }
+            .filter { deal in
+                let dealLocation = CLLocation(
+                    latitude: deal.location.latitude,
+                    longitude: deal.location.longitude
+                )
+
+                return currentLocation.distance(from: dealLocation) <= radiusMeters
+            }
+            .sorted {
+                let firstDistance = currentLocation.distance(
+                    from: CLLocation(latitude: $0.location.latitude, longitude: $0.location.longitude)
+                )
+                let secondDistance = currentLocation.distance(
+                    from: CLLocation(latitude: $1.location.latitude, longitude: $1.location.longitude)
+                )
+
+                return firstDistance < secondDistance
+            }
     }
 
     func isSaved(_ deal: Deal) -> Bool {
@@ -70,6 +105,7 @@ final class DealManager {
 
         deals = []
         savedDealIDs = []
+        archivedDealIDs = []
 
         guard let userID else {
             isLoadingDeals = false
@@ -88,7 +124,6 @@ final class DealManager {
 
         userDealsListener = database.collection("userDeals")
             .whereField("userId", isEqualTo: userID)
-            .whereField("relationType", isEqualTo: "saved")
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self else { return }
 
@@ -102,8 +137,31 @@ final class DealManager {
                     return
                 }
 
-                let ids = snapshot.documents.compactMap { $0.data()["dealId"] as? String }
-                self.savedDealIDs = Set(ids)
+                var savedIDs: Set<String> = []
+                var archivedIDs: Set<String> = []
+
+                for document in snapshot.documents {
+                    let data = document.data()
+
+                    guard
+                        let dealId = data["dealId"] as? String,
+                        let relationType = data["relationType"] as? String
+                    else {
+                        continue
+                    }
+
+                    switch relationType {
+                    case "saved":
+                        savedIDs.insert(dealId)
+                    case "archived":
+                        archivedIDs.insert(dealId)
+                    default:
+                        break
+                    }
+                }
+
+                self.savedDealIDs = savedIDs
+                self.archivedDealIDs = archivedIDs
                 self.isLoadingSavedDeals = false
                 self.hasLoadedSavedDeals = true
 
@@ -302,6 +360,33 @@ final class DealManager {
             }
         } catch {
             print("Error toggling save: \(error.localizedDescription)")
+        }
+    }
+
+    func archiveExpiredDeals(for userID: String?) async {
+        guard let userID else { return }
+
+        let expiredDeals = Array(Set((savedDeals + submittedDeals(for: userID)).filter { $0.isExpired }))
+            .sorted { $0.expiration < $1.expiration }
+
+        guard !expiredDeals.isEmpty else { return }
+
+        do {
+            let batch = database.batch()
+
+            for deal in expiredDeals where !archivedDealIDs.contains(deal.id) {
+                let relationRef = database.collection("userDeals").document()
+                batch.setData([
+                    "userId": userID,
+                    "dealId": deal.id,
+                    "relationType": "archived",
+                    "createdAt": Timestamp(date: Date())
+                ], forDocument: relationRef)
+            }
+
+            try await batch.commit()
+        } catch {
+            print("Error archiving expired deals: \(error.localizedDescription)")
         }
     }
 }

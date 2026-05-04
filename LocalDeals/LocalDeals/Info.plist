@@ -15,5 +15,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>VoteFunctionURL</key>
+	<string>https://us-central1-localdeals-fbda3.cloudfunctions.net/upvoteDeal</string>
 </dict>
 </plist>
