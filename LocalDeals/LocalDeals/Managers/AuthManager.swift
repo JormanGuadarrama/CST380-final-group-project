@@ -52,7 +52,7 @@ final class AuthManager {
             guard let self else { return }
 
             self.firebaseUser = firebaseUser
-            self.isSignedIn = (firebaseUser != nil)
+            self.isSignedIn = firebaseUser != nil
 
             if let firebaseUser {
                 Task {
@@ -349,8 +349,9 @@ final class AuthManager {
     private func friendlyAuthError(_ error: Error) -> String {
         let nsError = error as NSError
 
-        if nsError.domain == AuthErrorDomain,
-           let code = AuthErrorCode(_bridgedNSError: nsError){
+        if nsError.domain == AuthErrorDomain {
+            let code = AuthErrorCode(_bridgedNSError: nsError)
+
             switch code {
             case .emailAlreadyInUse:
                 return "That email is already registered. Try signing in instead."
@@ -372,26 +373,33 @@ final class AuthManager {
         return error.localizedDescription
     }
 
-    private func topViewController(
-        base: UIViewController? = UIApplication.shared
-            .connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap { $0.windows }
-            .first(where: \.isKeyWindow)?
-            .rootViewController
-    ) -> UIViewController? {
-        if let nav = base as? UINavigationController {
+    @MainActor
+    private func topViewController(base: UIViewController? = nil) -> UIViewController? {
+        let rootViewController: UIViewController?
+
+        if let base {
+            rootViewController = base
+        } else {
+            rootViewController = UIApplication.shared
+                .connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first(where: { $0.isKeyWindow })?
+                .rootViewController
+        }
+
+        if let nav = rootViewController as? UINavigationController {
             return topViewController(base: nav.visibleViewController)
         }
 
-        if let tab = base as? UITabBarController {
+        if let tab = rootViewController as? UITabBarController {
             return topViewController(base: tab.selectedViewController)
         }
 
-        if let presented = base?.presentedViewController {
+        if let presented = rootViewController?.presentedViewController {
             return topViewController(base: presented)
         }
 
-        return base
+        return rootViewController
     }
 }
