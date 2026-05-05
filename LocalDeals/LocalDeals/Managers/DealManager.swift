@@ -246,7 +246,7 @@ final class DealManager {
             return
         }
 
-        let seedRef = database.collection("appMetadata").document("mockDealSeed")
+        let seedRef = database.collection("appMetadata").document("mockDealSeedV5")
 
         do {
             let seedSnapshot = try await seedRef.getDocument()
