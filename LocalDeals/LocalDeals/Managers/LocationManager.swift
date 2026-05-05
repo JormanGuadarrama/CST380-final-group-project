@@ -5,6 +5,8 @@ import Observation
 @MainActor
 @Observable
 final class LocationManager: NSObject, CLLocationManagerDelegate {
+    static let shared = LocationManager()
+
     private let manager = CLLocationManager()
 
     var currentLocation: CLLocation?

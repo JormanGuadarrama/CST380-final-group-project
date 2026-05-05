@@ -6,7 +6,7 @@ struct DealsView: View {
     @Environment(DealManager.self) var dealManager
     @Environment(AuthManager.self) var authManager
 
-    @State private var locationManager = LocationManager()
+    @State private var locationManager = LocationManager.shared
 
     @AppStorage("nearbyDealRadiusMiles") private var nearbyDealRadiusMiles = 5
 

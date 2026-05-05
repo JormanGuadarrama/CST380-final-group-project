@@ -6,7 +6,7 @@ import FirebaseFirestoreInternal
 struct MapView: View {
     @Environment(DealManager.self) var dealManager
 
-    @State private var locationManager = LocationManager()
+    @State private var locationManager = LocationManager.shared
     @State private var hasCenteredOnUser = false
 
     @State private var position: MapCameraPosition = .region(
