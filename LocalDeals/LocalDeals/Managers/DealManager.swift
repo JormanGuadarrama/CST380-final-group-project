@@ -27,6 +27,9 @@ final class DealManager {
     private var dealsListener: ListenerRegistration?
     private var userDealsListener: ListenerRegistration?
     private var dealVotesListener: ListenerRegistration?
+    private let notificationManager = NotificationManager.shared
+    private let locationManager = LocationManager.shared
+    private var currentUserID: String?
 
     init(isMocked: Bool = false) {
         if isMocked {
@@ -107,6 +110,7 @@ final class DealManager {
     }
 
     func handleAuthChange(userID: String?) {
+        currentUserID = userID
         dealsListener?.remove()
         userDealsListener?.remove()
         dealVotesListener?.remove()
@@ -290,6 +294,49 @@ final class DealManager {
         }
     }
 
+
+    private var nearbyNotificationRadiusMiles: Double {
+        let storedRadius = UserDefaults.standard.integer(forKey: "nearbyDealRadiusMiles")
+        return Double(storedRadius == 0 ? 5 : storedRadius)
+    }
+
+    private func makeDeal(from document: QueryDocumentSnapshot) -> Deal? {
+        let data = document.data()
+
+        guard
+            let title = data["title"] as? String,
+            let businessName = data["businessName"] as? String,
+            let description = data["description"] as? String,
+            let discountType = data["discountType"] as? String,
+            let expirationTimestamp = data["expiration"] as? Timestamp,
+            let imageUrl = data["imageUrl"] as? String,
+            let location = data["location"] as? GeoPoint,
+            let createdByUid = data["createdByUid"] as? String,
+            let createdByEmail = data["createdByEmail"] as? String
+        else {
+            print("Skipping invalid deal doc: \(document.documentID)")
+            return nil
+        }
+
+        let votes = data["votes"] as? Int ?? 0
+        let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
+
+        return Deal(
+            id: document.documentID,
+            title: title,
+            businessName: businessName,
+            description: description,
+            discountType: discountType,
+            expiration: expirationTimestamp.dateValue(),
+            imageUrl: imageUrl,
+            location: location,
+            votes: votes,
+            createdByUid: createdByUid,
+            createdByEmail: createdByEmail,
+            createdAt: createdAt
+        )
+    }
+
     private func listenForDeals() {
         dealsListener?.remove()
 
@@ -311,45 +358,27 @@ final class DealManager {
                     return
                 }
 
+                let shouldAlertForNewDeals = self.hasLoadedDeals
                 var fetchedDeals: [Deal] = []
 
                 for document in querySnapshot.documents {
-                    let data = document.data()
+                    guard let deal = self.makeDeal(from: document) else { continue }
+                    fetchedDeals.append(deal)
+                }
 
-                    guard
-                        let title = data["title"] as? String,
-                        let businessName = data["businessName"] as? String,
-                        let description = data["description"] as? String,
-                        let discountType = data["discountType"] as? String,
-                        let expirationTimestamp = data["expiration"] as? Timestamp,
-                        let imageUrl = data["imageUrl"] as? String,
-                        let location = data["location"] as? GeoPoint,
-                        let createdByUid = data["createdByUid"] as? String,
-                        let createdByEmail = data["createdByEmail"] as? String
-                    else {
-                        print("Skipping invalid deal doc: \(document.documentID)")
-                        continue
+                if shouldAlertForNewDeals {
+                    for change in querySnapshot.documentChanges where change.type == .added {
+                        guard let newDeal = self.makeDeal(from: change.document) else { continue }
+
+                        Task {
+                            await self.notificationManager.notifyIfNeeded(
+                                for: newDeal,
+                                currentLocation: self.locationManager.currentLocation,
+                                radiusMiles: self.nearbyNotificationRadiusMiles,
+                                currentUserID: self.currentUserID
+                            )
+                        }
                     }
-
-                    let votes = data["votes"] as? Int ?? 0
-                    let createdAt = (data["createdAt"] as? Timestamp)?.dateValue()
-
-                    fetchedDeals.append(
-                        Deal(
-                            id: document.documentID,
-                            title: title,
-                            businessName: businessName,
-                            description: description,
-                            discountType: discountType,
-                            expiration: expirationTimestamp.dateValue(),
-                            imageUrl: imageUrl,
-                            location: location,
-                            votes: votes,
-                            createdByUid: createdByUid,
-                            createdByEmail: createdByEmail,
-                            createdAt: createdAt
-                        )
-                    )
                 }
 
                 self.deals = fetchedDeals
