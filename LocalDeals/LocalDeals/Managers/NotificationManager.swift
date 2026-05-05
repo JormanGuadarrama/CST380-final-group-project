@@ -5,12 +5,12 @@
 //  Created by Kevin Crapo on 5/4/26.
 //
 
-
 import Foundation
 import CoreLocation
 import UserNotifications
 import Observation
 import FirebaseFirestore
+
 @MainActor
 @Observable
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
@@ -32,8 +32,11 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     func requestPermission() async {
         do {
-            _ = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+            let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
+            print("[Notification] Permission granted: \(granted)")
+
             await refreshAuthorizationStatus()
+            print("[Notification] Authorization status after request: \(authorizationStatus.rawValue)")
         } catch {
             print("Error requesting notification permission: \(error.localizedDescription)")
         }
@@ -42,6 +45,8 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     func refreshAuthorizationStatus() async {
         let settings = await notificationCenter.notificationSettings()
         authorizationStatus = settings.authorizationStatus
+
+        print("[Notification] Refreshed authorization status: \(authorizationStatus.rawValue)")
     }
 
     func notifyIfNeeded(
@@ -50,20 +55,60 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         radiusMiles: Double,
         currentUserID: String?
     ) async {
-        guard authorizationStatus == .authorized || authorizationStatus == .provisional else { return }
-        guard let currentLocation else { return }
-        guard !deal.isExpired else { return }
-        // Uncomment this line after demo. It makes it so nearby deals don't notify if user submitted.
-        //guard deal.createdByUid != currentUserID else { return }
-        guard !hasAlreadyNotified(for: deal.id) else { return }
+        print("[Notification] Checking deal: \(deal.title)")
+        print("[Notification] Deal ID: \(deal.id)")
+        print("[Notification] Authorization status: \(authorizationStatus.rawValue)")
+        print("[Notification] Current location exists: \(currentLocation != nil)")
+        print("[Notification] Deal expired: \(deal.isExpired)")
+        print("[Notification] Deal creator: \(deal.createdByUid)")
+        print("[Notification] Current user: \(currentUserID ?? "nil")")
+        print("[Notification] Already notified: \(hasAlreadyNotified(for: deal.id))")
+        print("[Notification] Radius miles: \(radiusMiles)")
+
+        guard authorizationStatus == .authorized || authorizationStatus == .provisional else {
+            print("[Notification] Blocked: notifications not authorized")
+            return
+        }
+
+        guard let currentLocation else {
+            print("[Notification] Blocked: no current location")
+            return
+        }
+
+        guard !deal.isExpired else {
+            print("[Notification] Blocked: deal is expired")
+            return
+        }
+
+        // Uncomment this line after demo.
+        // This prevents nearby deal alerts for deals submitted by the current user.
+        /*
+        guard deal.createdByUid != currentUserID else {
+            print("[Notification] Blocked: user created this deal")
+            return
+        }
+        */
+
+        guard !hasAlreadyNotified(for: deal.id) else {
+            print("[Notification] Blocked: already notified for this deal")
+            return
+        }
 
         let dealLocation = CLLocation(
             latitude: deal.location.latitude,
             longitude: deal.location.longitude
         )
+
         let distanceMiles = currentLocation.distance(from: dealLocation) / 1609.34
 
-        guard distanceMiles <= radiusMiles else { return }
+        print("[Notification] User location: \(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
+        print("[Notification] Deal location: \(deal.location.latitude), \(deal.location.longitude)")
+        print("[Notification] Distance miles: \(distanceMiles)")
+
+        guard distanceMiles <= radiusMiles else {
+            print("[Notification] Blocked: deal is outside radius")
+            return
+        }
 
         let content = UNMutableNotificationContent()
         content.title = "New deal nearby"
@@ -81,8 +126,9 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         do {
             try await notificationCenter.add(request)
             markNotified(for: deal.id)
+            print("[Notification] Scheduled notification for \(deal.title)")
         } catch {
-            print("Error scheduling nearby deal notification: \(error.localizedDescription)")
+            print("[Notification] Error scheduling nearby deal notification: \(error.localizedDescription)")
         }
     }
 
